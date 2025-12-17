@@ -2,3 +2,8 @@
 .vscode/settings.json
 .vscode/tasks.json
 tests/main.exe
+data/
+build/
+to_compress/
+lib/
+tools/table-generator/table-generator.exe
