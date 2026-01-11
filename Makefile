@@ -174,10 +174,11 @@ symlinks: $(LIBDIR)/$(SHARED_REAL)
 	ln -sf $(SHARED_MAJOR) $(LIBDIR)/$(SHARED_UNVER)
 
 # -------- Object file rules --------
-$(OBJDIR)/%.bin.o $(OBJDIR)/%.bin.h: %.bin
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
+# Generate object file from binary using bin2o
+$(OBJDIR)/%.bin.o: $(DATA)/%.bin
+	@mkdir -p $(dir $@)
+	@echo "Converting $< → $@"
+	$(bin2o)
 
 $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@)
