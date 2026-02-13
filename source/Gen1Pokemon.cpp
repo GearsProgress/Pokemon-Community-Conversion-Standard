@@ -28,9 +28,14 @@ void Gen1Pokemon::print(std::ostream &os)
 }
 #endif
 
+u32 Gen1Pokemon::getRawSpeciesIndexNumber()
+{
+    return getVar(speciesIndexNumber[1]);
+}
+
 u32 Gen1Pokemon::getSpeciesIndexNumber()
 {
-    return gen_1_index_array[getVar(speciesIndexNumber[1])];
+    return gen_1_index_array[getRawSpeciesIndexNumber()];
 }
 
 bool Gen1Pokemon::setSpeciesIndexNumber(byte newVal)

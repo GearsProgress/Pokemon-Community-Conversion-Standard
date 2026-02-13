@@ -3512,13 +3512,14 @@ static const u8 localization_charset_indices[]{
 void load_localized_charset(u16 *output_char_array, byte gen, Language lang)
 {
     u8 generation_charsets[2048];
-    const u8 *input_data;
     // in the localization_charset_indices list,
     // gen 1 starts first and every gen has 7 entries (1 per language)
     // however, the language values are 1-based, so we need to convert to 0-based
     const u8 lang_index = localization_charset_indices[(gen - 1) * 7 + (lang - 1)];
 
 #if USE_COMPRESSED_DATA
+    const u8 *input_data;
+
     switch (gen)
     {
     case 1:

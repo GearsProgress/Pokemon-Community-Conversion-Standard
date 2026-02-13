@@ -2,7 +2,7 @@
 CC       ?= gcc
 CXX      ?= g++
 AR       ?= ar
-CFLAGS   ?= -O2 -fPIC
+CFLAGS   ?= -Os -fPIC -fno-rtti -fno-exceptions -fno-unwind-tables -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -g
 CXXFLAGS ?= $(CFLAGS)
 LDFLAGS  ?=
 SOFLAGS  ?= -shared

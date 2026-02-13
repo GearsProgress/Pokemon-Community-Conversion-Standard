@@ -42,7 +42,7 @@ protected:
 #endif
 
 public:
-    virtual void loadData(Language nLang, byte nDataArray[], byte nNicknameArray[], byte nOTArray[], byte nExternalIndexNum);
+    virtual void loadData(Language nLang, const byte nDataArray[], const byte nNicknameArray[], const byte nOTArray[], byte nExternalIndexNum);
 
     // All of the simple getters and setters are defined here
     u32 getLevel() { return getVar(level[generation - 1]); }

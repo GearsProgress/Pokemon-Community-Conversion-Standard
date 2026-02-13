@@ -166,8 +166,8 @@ int main()
     //Gen3Pokemon converted(&table);
     //Gen2Pokemon test4(&table);
 
-    // test1.loadData(charmander_data, charmander_name, charmander_ot, charmander_id);
-    // test2.loadData(cyndaquil_data);
+    // test1.loadData(ENGLISH, charmander_data, charmander_name, charmander_ot, charmander_id);
+    // test2.loadData(ENGLISH, cyndaquil_data, charmander_name, charmander_ot, charmander_id);
     // test3.loadData(roselia_data);
     //test4.loadData(ENGLISH, celebi_data, charmander_name, charmander_ot, celebi_id);
 
@@ -194,7 +194,6 @@ int main()
 
     //std::cout << converted.printDataArray(true);
     
-
     PC.loadData(1, ENGLISH, gen1_rb_debug_box_data);
     //std::cout << *PC.getPokemon(10);
     //PC.getGBPokemon(10)->setDV(ATTACK, 10);

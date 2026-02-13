@@ -75,7 +75,7 @@ extern const u8 EVOLUTIONS[POKEMON_ARRAY_SIZE];
 extern const byte MOVESETS[POKEMON_ARRAY_SIZE][32];
 
 /**
- * Okay, here's the thing: to reduce the rom size, we compressed a bunch of data with ZX0
+ * Okay, here's the thing: to reduce the rom size, we compressed a bunch of data
  * Among this data are various data tables that were previously just stored as const arrays.
  *
  * But, during the mystery_gift_builder/mystery_gift_injector execution,

@@ -1,10 +1,10 @@
 #include "Gen2Pokemon.h"
 
-Gen2Pokemon::Gen2Pokemon(PokemonTables *table)
+Gen2Pokemon::Gen2Pokemon(PokemonTables *table, bool isPartyPkmn)
 {
     pokeTable = table;
     dataArrayPtr = dataArray;
-    dataArraySize = 32;
+    dataArraySize = isPartyPkmn ? 48 : 32;
     generation = 2;
 }
 
@@ -20,6 +20,7 @@ void Gen2Pokemon::print(std::ostream &os)
        << "\n\tSpeed: " << getStatExp(SPEED) << " Stat EXP, " << getDV(SPEED) << " DVs"
        << "\n\tSpecial Attack: " << getStatExp(SPECIAL) << " Stat EXP, " << getDV(SPECIAL) << " DVs"
        << "\n\tSpecial Defense: " << getStatExp(SPECIAL) << " Stat EXP, " << getDV(SPECIAL) << " DVs" << "\n" // Special Attack and Special Defense are the same
+       << "Current HP: " << getCurrentHP() << "\n"
        << "Held Item: " << getHeldItem() << "\n"
        << "Friendship: " << getFriendship() << "\n"
        << "Pokerus: "
@@ -41,4 +42,5 @@ const DataVarInfo
     Gen2Pokemon::g2_caughtDataTime = {0x1D, 2, 6},
     Gen2Pokemon::g2_caughtDataLevel = {0x1D, 6, 0},
     Gen2Pokemon::g2_caughtDataGender = {0x1E, 1, 7},
-    Gen2Pokemon::g2_caughtDataLocation = {0x1E, 7, 0};
+    Gen2Pokemon::g2_caughtDataLocation = {0x1E, 7, 0},
+    Gen2Pokemon::g2_currentHP = {0x22, 16, 0};
