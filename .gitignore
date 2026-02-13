@@ -1,4 +1,11 @@
 .vscode/c_cpp_properties.json
 .vscode/settings.json
 .vscode/tasks.json
-tests/main.exe
+examples/example.exe
+examples/example
+libpccs.a
+libpccs.so
+libpccs.so.1
+libpccs.so.1.0
+tests/pccs_test
+tests/pccs_test.exe
