@@ -952,6 +952,7 @@ static const u8 localization_charset_indices[]{
 void load_localized_charset(u16 *output_char_array, byte gen, Language lang)
 {
     u8 generation_charsets[2048];
+    const u8 *input_data;
     size_t input_size;
 
     // in the localization_charset_indices list,
@@ -960,7 +961,6 @@ void load_localized_charset(u16 *output_char_array, byte gen, Language lang)
     const u8 lang_index = localization_charset_indices[(gen - 1) * 7 + (lang - 1)];
 
 #if ON_GBA
-    const u8 *input_data;
     switch (gen)
     {
     case 1:

@@ -14,7 +14,7 @@ SRCS := $(shell find $(SRC_DIR) -type f -name '*.cpp')
 # Object files
 OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
-LIBPCCS := ../libpccs.a
+LIBPCCS := ../lib/libpccs.a
 
 # Ensure necessary directories exist
 # This function ensures the directory for the target exists
