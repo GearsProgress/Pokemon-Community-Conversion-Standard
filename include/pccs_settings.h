@@ -14,10 +14,8 @@
 
 #if ON_GBA
 #define USE_CPP_RAND false
-#define USE_COMPRESSED_DATA true
 #else
 #define USE_CPP_RAND true
-#define USE_COMPRESSED_DATA false
 #endif
 
 #define ACCESS_POKEDEX false

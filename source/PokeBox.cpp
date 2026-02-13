@@ -118,7 +118,7 @@ void PokeBox::convertPkmn(int index)
     GBPokemon *oldPkmn = (GBPokemon *)(basePkmn);
 
     oldPkmn->convertToGen3(convertedPkmn, stabilize_mythical);
-    delete boxStorage[index];
+    delete getPokemon(index); // This is causing issues. Is it needed??
     boxStorage[index] = convertedPkmn;
 }
 

@@ -40,7 +40,8 @@ std::string GBPokemon::parentPrint()
 {
     pokeTable->load_input_charset(generation, ENGLISH);
     std::stringstream os;
-    os << "Species Index Number: " << getSpeciesIndexNumber() << "\n"
+    os << "Is valid: " << isValid << "\n"
+       << "Species Index Number: " << getSpeciesIndexNumber() << "\n"
        << "Nickname: [";
 
     for (int i = 0; i < 10; i++)
