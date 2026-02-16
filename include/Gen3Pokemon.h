@@ -265,7 +265,7 @@ public:
     bool setAbility(u32 newVal);
 
     // This is used to load our data in from an array and decrypt it
-    void loadData(byte incomingArray[]);
+    void loadData(const byte incomingArray[], bool incomingEncrypted = true);
 
     // And then some general functions
     void decryptSubstructures();
