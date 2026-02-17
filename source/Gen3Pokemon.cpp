@@ -1,4 +1,5 @@
 #include "Gen3Pokemon.h"
+#include "pccs_utils.h"
 #include <cstring>
 
 Gen3Pokemon::Gen3Pokemon(PokemonTables *table)
