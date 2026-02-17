@@ -1,4 +1,5 @@
 #include "Gen3Pokemon.h"
+#include <cstring>
 
 Gen3Pokemon::Gen3Pokemon(PokemonTables *table)
 {
@@ -26,11 +27,11 @@ void Gen3Pokemon::print(std::ostream &os)
     updateSubstructureShift();
 
     pokeTable->load_gen3_charset(ENGLISH);
-    if (!isValid)
-    {
-        os << "ERROR: POKEMON IS INVALID\n";
-    }
-    else
+    // if (!isValid)
+    // {
+    //     os << "ERROR: POKEMON IS INVALID\n";
+    // }
+    // else
     {
         os
             << "Personality Value: " << std::hex << getPersonalityValue() << std::dec
@@ -185,13 +186,11 @@ bool Gen3Pokemon::setAbility(u32 newVal) // We need to check if they have two ab
 }
 
 // This is used to load our data in from an array and mark it as encrypted
-void Gen3Pokemon::loadData(byte incomingArray[])
+void Gen3Pokemon::loadData(const byte incomingArray[], bool incomingEncrypted)
 {
-    for (int i = 0; i < dataArraySize; i++)
-    {
-        dataArrayPtr[i] = incomingArray[i];
-    }
-    isEncrypted = true;
+    memcpy(dataArrayPtr, incomingArray, dataArraySize);
+    isEncrypted = incomingEncrypted;
+    currSubstructureShift = getPersonalityValue() % 24;
 }
 
 // And then some general functions
@@ -204,6 +203,7 @@ void Gen3Pokemon::decryptSubstructures()
         {
             dataArrayPtr[0x20 + i] ^= ((key >> (8 * (i % 4))) & 0xFF);
         }
+        isEncrypted = false;
     }
 };
 
@@ -216,6 +216,7 @@ void Gen3Pokemon::encryptSubstructures()
         {
             dataArrayPtr[0x20 + i] ^= ((key >> (8 * (i % 4))) & 0xFF);
         }
+        isEncrypted = true;
     }
 };
 

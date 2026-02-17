@@ -21,11 +21,7 @@
 // Avoid having to import math
 inline u32 sizeToMask(int len)
 {
-    u32 out = 1;
-    for (int i = 0; i < len; i++)
-    {
-        out *= 2;
-    }
+    const u32 out = 1 << len;
     return (out - 1);
 }
 
@@ -94,11 +90,11 @@ protected:
 
     bool isBigEndian;
 
-    u32 getVar(DataVarInfo dataVar);
-    u32 getVar(DataVarInfo dataVar, int extraByteOffset);
+    u32 getVar(const DataVarInfo& dataVar);
+    u32 getVar(const DataVarInfo& dataVar, int extraByteOffset);
 
-    bool setVar(DataVarInfo dataVar, u32 newValue);
-    bool setVar(DataVarInfo dataVar, int extraByteOffset, u32 newValue);
+    bool setVar(const DataVarInfo& dataVar, u32 newValue);
+    bool setVar(const DataVarInfo& dataVar, int extraByteOffset, u32 newValue);
 };
 
 #endif

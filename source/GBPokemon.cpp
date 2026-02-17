@@ -1,4 +1,5 @@
 #include "GBPokemon.h"
+#include <cstring>
 
 // This constructor fills all our convenience arrays
 GBPokemon::GBPokemon()
@@ -13,22 +14,11 @@ GBPokemon::GBPokemon()
 }
 
 // This is used to load our data in from an array
-void GBPokemon::loadData(Language nLang, byte nDataArray[], byte nNicknameArray[], byte nOTArray[], byte nExternalIndexNum)
+void GBPokemon::loadData(Language nLang, const byte nDataArray[], const byte nNicknameArray[], const byte nOTArray[], byte nExternalIndexNum)
 {
-    for (int i = 0; i < dataArraySize; i++)
-    {
-        dataArrayPtr[i] = nDataArray[i];
-    }
-
-    for (int i = 0; i < nicknameArraySize; i++)
-    {
-        nicknameArray[i] = nNicknameArray[i];
-    }
-
-    for (int i = 0; i < OTArraySize; i++)
-    {
-        OTArray[i] = nOTArray[i];
-    }
+    memcpy(dataArrayPtr, nDataArray, dataArraySize);
+    memcpy(nicknameArray, nNicknameArray, nicknameArraySize);
+    memcpy(OTArray, nOTArray, OTArraySize);
 
     if (generation == 1)
     {

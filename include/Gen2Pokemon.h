@@ -6,9 +6,10 @@
 class Gen2Pokemon : public GBPokemon // The class for gen 2 Pokemon
 {
 public:
-    Gen2Pokemon(PokemonTables *table);
+    Gen2Pokemon(PokemonTables *table, bool isPartyPkmn = false);
     byte dataArray[32];
 
+    u32 getCurrentHP() { return getVar(g2_currentHP); }
     u32 getHeldItem() { return getVar(g2_heldItem); }
     u32 getFriendship() { return getVar(g2_friendship); }
     u32 getPokerusStrain() { return getVar(g2_pokerusStrain); }
@@ -26,6 +27,7 @@ public:
     bool setCaughtDataLevel(byte newVal) { return setVar(g2_caughtDataLevel, newVal); }
     bool setCaughtDataGender(byte newVal) { return setVar(g2_caughtDataGender, newVal); }
     bool setCaughtDataLocation(byte newVal) { return setVar(g2_caughtDataLocation, newVal); }
+    bool setCurrentHP(u32 newVal) { return setVar(g2_currentHP, newVal); }
 
 protected:
     static const DataVarInfo
@@ -36,7 +38,8 @@ protected:
         g2_caughtDataTime,
         g2_caughtDataLevel,
         g2_caughtDataGender,
-        g2_caughtDataLocation;
+        g2_caughtDataLocation,
+        g2_currentHP;
 
 #if ON_GBA
 #else

@@ -109,7 +109,7 @@ else
 CC       ?= gcc
 CXX      ?= g++
 AR       ?= ar
-CFLAGS   ?= -O2
+CFLAGS   ?= -Os -fno-rtti -fno-exceptions -fno-unwind-tables -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -g
 CXXFLAGS ?= $(CFLAGS)
 LDFLAGS  ?=
 SOFLAGS  ?= -shared

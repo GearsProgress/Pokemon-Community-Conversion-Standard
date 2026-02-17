@@ -9,6 +9,16 @@ public:
     Gen1Pokemon(PokemonTables *table);
     byte dataArray[33];
 
+    /**
+     * @brief This function gets the exact raw species index number as stored in the data (without conversion using gen_1_index_array)
+     */
+    u32 getRawSpeciesIndexNumber();
+
+    /**
+     * @brief This function gets the species index number, after getting converted with gen_1_index_array.
+     * This conversion is necessary because the actual species index numbers used in the data doesn't follow
+     * the canon species index in gen I.
+     */
     u32 getSpeciesIndexNumber();
     u32 getCurrentHP() { return getVar(g1_currentHP); }
     u32 getStatusCondition() { return getVar(g1_statusCondition); }
