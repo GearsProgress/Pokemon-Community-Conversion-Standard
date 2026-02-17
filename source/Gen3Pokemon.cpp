@@ -206,11 +206,9 @@ bool Gen3Pokemon::setAbility(u32 newVal) // We need to check if they have two ab
 void Gen3Pokemon::loadData(const byte incomingArray[], bool areSubstructsShuffled)
 {
     memcpy(dataArrayPtr, incomingArray, dataArraySize);
-    #if 1
     // reset currSubstructureLehmerCode before calling updateSubstructureOrder
     currSubstructureLehmerCode = areSubstructsShuffled ? 0xFFFFFFFF : 0;
     updateSubstructureOrder(!areSubstructsShuffled);
-    #endif
 }
 
 // And then some general functions
@@ -386,21 +384,6 @@ bool Gen3Pokemon::isEncrypted()
     // the checksum is calculated on the decrypted data substruct.
     // So if the checksum doesn't match, then the data must still be encrypted.
     return (getChecksum() != checksum);
-}
-
-void Gen3Pokemon::swapSubstructureData(int indexOne, int indexTwo)
-{
-    if (indexOne == indexTwo)
-    {
-        return;
-    }
-    uint8_t tempBuffer[GEN3_POKEMON_SUBSTRUCTURE_SIZE];
-    uint8_t *firstStructPtr = dataArrayPtr + GEN3_PKMN_DATA_SUBSTRUCT_OFFSET + (indexOne * GEN3_POKEMON_SUBSTRUCTURE_SIZE);
-    uint8_t *secondStructPtr = dataArrayPtr + GEN3_PKMN_DATA_SUBSTRUCT_OFFSET + (indexTwo * GEN3_POKEMON_SUBSTRUCTURE_SIZE);
-
-    memcpy(tempBuffer, firstStructPtr, GEN3_POKEMON_SUBSTRUCTURE_SIZE);
-    memcpy(firstStructPtr, secondStructPtr, GEN3_POKEMON_SUBSTRUCTURE_SIZE);
-    memcpy(secondStructPtr, tempBuffer, GEN3_POKEMON_SUBSTRUCTURE_SIZE);
 }
 
 u32 Gen3Pokemon::calculateChecksum()

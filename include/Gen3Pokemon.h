@@ -297,7 +297,6 @@ public:
      */
     bool isEncrypted();
 private:
-    void swapSubstructureData(int indexOne, int indexTwo);
     u32 calculateChecksum();
 };
 
