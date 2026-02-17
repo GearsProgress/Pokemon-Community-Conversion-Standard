@@ -651,6 +651,8 @@ enum Substructure
     SUB_M,
 };
 
+#define GEN3_POKEMON_SUBSTRUCTURE_SIZE 12
+
 enum Language
 {
     JAPANESE = 1,
