@@ -190,6 +190,7 @@ void Gen3Pokemon::loadData(const byte incomingArray[], bool incomingEncrypted)
 {
     memcpy(dataArrayPtr, incomingArray, dataArraySize);
     isEncrypted = incomingEncrypted;
+    currSubstructureShift = getPersonalityValue() % 24;
 }
 
 // And then some general functions
@@ -202,6 +203,7 @@ void Gen3Pokemon::decryptSubstructures()
         {
             dataArrayPtr[0x20 + i] ^= ((key >> (8 * (i % 4))) & 0xFF);
         }
+        isEncrypted = false;
     }
 };
 
@@ -214,6 +216,7 @@ void Gen3Pokemon::encryptSubstructures()
         {
             dataArrayPtr[0x20 + i] ^= ((key >> (8 * (i % 4))) & 0xFF);
         }
+        isEncrypted = true;
     }
 };
 
