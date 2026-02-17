@@ -21,12 +21,12 @@ u32 byteSwapUint32(u32 val)
 
 void extractLehmerCode4(u32 n, u8 out[4])
 {
-    u8 pool[4] = {0, 1, 2, 3};
+    u32 pool[4] = {0, 1, 2, 3};
 
     // factorials: (digitsRemaining - 1)!
     // with digitsRemaining the number of digits remaining
     // after we picked the current one
-    const u8 fact[4] = {6, 2, 1, 1};
+    const u32 fact[4] = {6, 2, 1, 1};
     
     // fact[pos] tells you how many permutations each choice at this position represents.
 

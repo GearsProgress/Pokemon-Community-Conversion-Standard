@@ -133,14 +133,8 @@ TEST_CASE("extractLehmerCode4", "[unit][gen3][utils][lehmer]")
 
     extractLehmerCode4(21, out_order);
     REQUIRE(out_order[0] == 3);
-    REQUIRE(out_order[1] == 2);
-    REQUIRE(out_order[2] == 0);
-    REQUIRE(out_order[3] == 1);
-
-    extractLehmerCode4(22, out_order);
-    REQUIRE(out_order[0] == 3);
-    REQUIRE(out_order[1] == 2);
-    REQUIRE(out_order[2] == 1);
+    REQUIRE(out_order[1] == 1);
+    REQUIRE(out_order[2] == 2);
     REQUIRE(out_order[3] == 0);
 
     extractLehmerCode4(22, out_order);
