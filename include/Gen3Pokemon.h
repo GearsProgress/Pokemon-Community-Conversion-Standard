@@ -297,7 +297,10 @@ public:
      */
     bool isEncrypted();
 private:
-    u32 calculateChecksum();
+    u16 calculateChecksum();
+
+    // Encryption and decryption is the exact same operation. So we can just have one function for both.
+    void cryptStructures();
 };
 
 #endif

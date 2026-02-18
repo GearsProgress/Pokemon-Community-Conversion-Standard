@@ -670,4 +670,11 @@ enum RNGMethod
     BACD_R, // Used for calculating events
 };
 
+enum class Endianness
+{
+    READ_AS_IS,
+    LITTLE,
+    BIG
+};
+
 #endif

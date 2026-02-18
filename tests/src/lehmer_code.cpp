@@ -1,6 +1,8 @@
 #include "catch_amalgamated.hpp"
 #include "pccs_utils.h"
 
+using namespace PCCSUtils;
+
 TEST_CASE("extractLehmerCode4", "[unit][gen3][utils][lehmer]")
 {
     u8 out_order[4];

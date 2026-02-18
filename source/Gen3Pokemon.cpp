@@ -2,6 +2,8 @@
 #include "pccs_utils.h"
 #include <cstring>
 
+using namespace PCCSUtils;
+
 // determines the substructure offsets based on the personality value, and sets the substructOffsets array accordingly.
 // This array will contain the index offsets for the substructs, in the order of G, A, E, M
 static void determineSubstructOffsets(u32 substructLehmerCode, u8 *substructOffsets)
@@ -141,11 +143,14 @@ void Gen3Pokemon::print(std::ostream &os)
            << "\n";
     }
 };
-std::string Gen3Pokemon::printDataArray(bool encrypedData)
+std::string Gen3Pokemon::printDataArray(bool encryptedData)
 {
     updateSubstructureOrder(true);
     updateChecksum();
-    encryptSubstructures();
+    if(encryptedData)
+    {
+        encryptSubstructures();
+    }
     std::stringstream ss;
     for (int i = 0; i < 80; i++)
     {
@@ -216,11 +221,7 @@ void Gen3Pokemon::decryptSubstructures()
 {
     if (isEncrypted())
     {
-        u32 key = (getTrainerID() | getSecretID() << 16) ^ getPersonalityValue();
-        for (int i = 0; i < 48; i++)
-        {
-            dataArrayPtr[0x20 + i] ^= ((key >> (8 * (i % 4))) & 0xFF);
-        }
+        cryptStructures();
     }
 };
 
@@ -228,17 +229,13 @@ void Gen3Pokemon::encryptSubstructures()
 {
     if (!isEncrypted())
     {
-        u32 key = (getTrainerID() | getSecretID() << 16) ^ getPersonalityValue();
-        for (int i = 0; i < 48; i++)
-        {
-            dataArrayPtr[0x20 + i] ^= ((key >> (8 * (i % 4))) & 0xFF);
-        }
+        cryptStructures();
     }
 };
 
 void Gen3Pokemon::updateChecksum()
 {
-    bool encryptionState = isEncrypted();
+    const bool encryptionState = isEncrypted();
     decryptSubstructures();
     const u32 checksum = calculateChecksum();
     setChecksum(checksum);
@@ -271,8 +268,12 @@ void Gen3Pokemon::updateSubstructureOrder(bool shouldMove)
         u8 *dataSectionStartPtr = dataArrayPtr + GEN3_PKMN_DATA_SUBSTRUCT_OFFSET;
         u32 i;
 
+        // first we copy the old data sections into a temporary buffer, since they might get overwritten during the move process.
         memcpy(tempBuffer, dataSectionStartPtr, 48);
 
+        // now we copy the data from the temporary buffer to the correct new locations in the data array, based on the new substructure offsets.
+        // for each of the substructures (G, A, E, M), we find where it is currently located in the data array using substructOffsets, and then 
+        // we copy it to its new location based on newSubstructOffsets.
         for(i=0; i < 4; ++i)
         {
             oldOffset = substructOffsets[i] * GEN3_POKEMON_SUBSTRUCTURE_SIZE;
@@ -379,21 +380,42 @@ bool Gen3Pokemon::setOTArray(byte otArr[], int otArrSize)
 
 bool Gen3Pokemon::isEncrypted()
 {
-    const u32 checksum = calculateChecksum();
+    const u16 checksum = calculateChecksum();
 
     // the checksum is calculated on the decrypted data substruct.
     // So if the checksum doesn't match, then the data must still be encrypted.
     return (getChecksum() != checksum);
 }
 
-u32 Gen3Pokemon::calculateChecksum()
+u16 Gen3Pokemon::calculateChecksum()
 {
-    u32 checksum = 0x0000;
-    for (int i = 0; i < 48; i = i + 2)
+    u8 *cur = dataArrayPtr + GEN3_PKMN_DATA_SUBSTRUCT_OFFSET;
+    const u8* const end = cur + 48;
+    u16 checksum = 0x0000;
+    u16 curWord;
+    while(cur < end)
     {
-        checksum = checksum + ((dataArrayPtr[0x20 + i + 1] << 8) | dataArrayPtr[0x20 + i]);
+        cur = PCCSUtils::readUint16(cur, curWord, Endianness::LITTLE);
+        checksum += curWord;
     }
     return checksum;
+}
+
+void Gen3Pokemon::cryptStructures()
+{
+    const u32 key = (getTrainerID() | getSecretID() << 16) ^ getPersonalityValue();
+    u32 *cur = (u32*)(dataArrayPtr + GEN3_PKMN_DATA_SUBSTRUCT_OFFSET);
+    const u32 * const end = cur + (48 / sizeof(u32));
+
+    // This operation should be the same for any endianness, since the key is just a u32 and the data is just being treated as an array of bytes. So we can just do it as u32s for speed.
+    // that means: on a little endian system, the key will be stored in little endian and when reading the data as u32s, it will also be read in little endian, 
+    // so the bytes will line up correctly for the XOR operation. On a big endian system, the key will be stored in big endian and when reading the data as u32s, 
+    // it will also be read in big endian, so the bytes will also line up correctly for the XOR operation.
+    while(cur < end)
+    {
+        *cur ^= key;
+        ++cur;
+    }
 }
 
 #pragma region
