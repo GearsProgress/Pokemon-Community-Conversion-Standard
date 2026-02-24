@@ -651,6 +651,8 @@ enum Substructure
     SUB_M,
 };
 
+#define GEN3_POKEMON_SUBSTRUCTURE_SIZE 12
+
 enum Language
 {
     JAPANESE = 1,
@@ -666,6 +668,13 @@ enum RNGMethod
 {
     ABCD_U, // Normal method
     BACD_R, // Used for calculating events
+};
+
+enum class Endianness
+{
+    READ_AS_IS,
+    LITTLE,
+    BIG
 };
 
 #endif
