@@ -7,3 +7,4 @@ build/
 to_compress/
 lib/
 tools/table-generator/table-generator.exe
+tools/table-generator/table-generator
