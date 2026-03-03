@@ -34,13 +34,31 @@ endef
 ifneq (build,$(notdir $(CURDIR)))
 # -------- Cleanup --------
 # -------- Top-level targets --------
-.PHONY: all lib clean dirs symlinks
-all: dirs generate_tables bin2s_tool lib
+.PHONY: all all_internal lib clean dirs symlinks
 
-lib: generate_tables bin2s_tool
+ifeq ($(CXX),arm-none-eabi-g++)
+BUILD_FLAVOR := gba
+else
+BUILD_FLAVOR := host
+endif
+
+TABLES_STAMP := $(BUILDDIR)/.tables.$(BUILD_FLAVOR).stamp
+TABLE_GEN_INPUTS := $(shell find $(MKFILE_DIR)/tools/table-generator -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" -o -name "Makefile" \))
+
+all:
+	@before=$$(stat -c %Y $(LIBDIR)/libpccs.a 2>/dev/null || echo 0); \
+	$(MAKE) --no-print-directory all_internal; \
+	after=$$(stat -c %Y $(LIBDIR)/libpccs.a 2>/dev/null || echo 0); \
+	if [ "$$before" = "$$after" ] && [ "$$after" != "0" ]; then \
+		echo "PCCS build up to date."; \
+	fi
+
+all_internal: dirs $(TABLES_STAMP) bin2s_tool lib
+
+lib: $(TABLES_STAMP) bin2s_tool
 	@$(MAKE) -C build -f $(MKFILE_DIR)/Makefile
-	cp build/*.h lib/include/
-	cp -r include lib/
+	cp -u build/*.h lib/include/
+	cp -ru include lib/
 
 # Ensure the build directories exist
 dirs:
@@ -67,7 +85,7 @@ endif
 # But for compatibility with MSYS2 MinGW64 in Windows, we can't use env -i
 # Instead we need to use env like below and make sure we pass things like the temp dirs
 # otherwise it won't compile with MinGW64
-generate_tables:
+$(TABLES_STAMP): $(TABLE_GEN_INPUTS) $(MKFILE_DIR)/compress_lz10.sh | dirs
 	mkdir -p data
 	mkdir -p to_compress
 	@env - \
@@ -98,6 +116,7 @@ endif
 	@echo
 	@echo "----------------------------------------------------------------"
 	@echo
+	@touch $@
 
 clean:
 	$(MAKE) -C tools/table-generator clean
