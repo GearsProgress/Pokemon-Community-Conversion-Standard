@@ -71,7 +71,7 @@ bool PokeBox::removePokemon(int index)
 }
 
 // This is used to load our data in from an array
-void PokeBox::loadData(int generation, Language nLang, byte nDataArray[])
+void PokeBox::loadData(int generation, Language nLang, const byte nDataArray[])
 {
     if (nLang != ENGLISH)
     {
