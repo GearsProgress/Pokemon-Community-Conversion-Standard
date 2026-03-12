@@ -1,0 +1,315 @@
+#include "Gen3SaveFileManager.h"
+#include "Gen3Pokemon.h"
+#include "pccs_utils.h"
+
+#define SAVE_A_OFFSET       0 // Offset of Game Save A
+#define SAVE_B_OFFSET       0xE000 // Offset of Game Save B
+#define SECTION_ID_OFFSET   0x0FF4
+#define SECTION_CHECKSUM_OFFSET 0x0FF6
+#define SECTION_SIZE         0x1000
+#define SAVE_INDEX_OFFSET   0x0FFC
+#define FIRST_BOX_SECTION_ID 5
+#define NUM_BOX_SECTIONS 9
+#define BOX_BYTES_PER_SECTION 3968
+#define MONS_PER_BOX 30
+#define SINGLE_MON_BYTES_IN_BOX 80
+
+// read from file with endianness
+static void readUint16FromFile(FILE* file, uint16_t& outWord, Endianness fieldEndianness)
+{
+    u8 buffer[2];
+    if(!fread(buffer, 1, sizeof(buffer), file))
+    {
+        return;
+    }
+    PCCSUtils::readUint16(buffer, outWord, fieldEndianness);
+}
+
+static void readUint32FromFile(FILE* file, uint32_t& outDWord, Endianness fieldEndianness)
+{
+    u8 buffer[4];
+    if(!fread(buffer, 1, sizeof(buffer), file))
+    {
+        return;
+    }
+    PCCSUtils::readUint32(buffer, outDWord, fieldEndianness);
+}
+
+static void writeUint16ToFile(FILE* file, uint16_t value, Endianness fieldEndianness)
+{
+    u8 buffer[2];
+    PCCSUtils::writeUint16(buffer, value, fieldEndianness);
+    fwrite(buffer, 1, sizeof(buffer), file);
+}
+
+static void seekToSectionOffset(FILE* saveFile, const Gen3SaveMetadata& saveMetadata, uint8_t sectionId, u32 offsetWithinSection)
+{
+    fseek(saveFile, saveMetadata.sectionMap_[sectionId] + offsetWithinSection, SEEK_SET);
+}
+
+static void updateSectionChecksum(FILE* saveFile, const Gen3SaveMetadata& saveMetadata, uint8_t sectionId)
+{
+    unsigned num_bytes_to_checksum;
+    u32 checksum = 0;
+    u32 cur;
+    seekToSectionOffset(saveFile, saveMetadata, sectionId, 0);
+
+    switch(sectionId)
+    {
+    case 0:
+        num_bytes_to_checksum = 3884;
+        break;
+    case 4:
+        num_bytes_to_checksum = 3848;
+        break;
+    case 13:
+        num_bytes_to_checksum = 2000;
+        break;
+    default:
+        num_bytes_to_checksum = 3968;
+        break;
+    }
+
+    // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#Checksum
+    for(unsigned i = 0; i < num_bytes_to_checksum; i += sizeof(u32))
+    {
+        readUint32FromFile(saveFile, cur, Endianness::LITTLE);
+        checksum += cur;
+    }
+    const u16 reduced_checksum = ((checksum & 0xFFFF0000) >> 16) + (checksum & 0x0000FFFF);
+
+    seekToSectionOffset(saveFile, saveMetadata, sectionId, SECTION_CHECKSUM_OFFSET);
+    writeUint16ToFile(saveFile, reduced_checksum, Endianness::LITTLE);
+}
+
+/**
+ * @brief This class exists to abstract the fact that
+ * PC boxes are stored across multiple sections in the save file.
+ * It will provide an interface to read and write bytes to the box 
+ * without needing to worry about the underlying structure of the save file
+ * 
+ * But the underlying structure does look like a large buffer to store 
+ * the pokémon for ALL boxes, that is split up near the section boundaries.
+ * That does mean that a box can be split across two sections, and that's exactly
+ * why a class like this can be useful, to abstract away that complexity and just let us read and write
+ *  to the box as if it were a single contiguous buffer.
+ */
+class Gen3BoxBufferManager
+{
+public:
+    Gen3BoxBufferManager(Gen3SaveMetadata& saveMetadata, FILE* saveFile)
+        : saveMetadata_(saveMetadata)
+        , saveFile_(saveFile)
+    {
+    }
+
+    
+    void seek(u32 offset_in_box_buffer)
+    {
+        const u32 curBoxFieldSize = 4;
+        // we store the offset instead of doing the seek immediately.
+        // After all, we should be wary of external code triggering some kind of seek on the file.
+        curOffset_ = curBoxFieldSize + offset_in_box_buffer;
+
+        const u16 sectionId = convertOffsetToSectionId(curOffset_);
+        u32 offsetWithinSection = curOffset_ % BOX_BYTES_PER_SECTION;
+        fseek(saveFile_, saveMetadata_.sectionMap_[sectionId] + offsetWithinSection, SEEK_SET);
+    }
+
+    void rewind(u32 numBytes)
+    {
+        fseek(saveFile_, -static_cast<long>(numBytes), SEEK_CUR);
+        curOffset_ -= numBytes;
+    }
+
+    void advance(u32 numBytes)
+    {
+        fseek(saveFile_, static_cast<long>(numBytes), SEEK_CUR);
+        curOffset_ += numBytes;
+    }
+
+    void readUint32(uint32_t& outDWord, Endianness fieldEndianness)
+    {
+        readUint32FromFile(saveFile_, outDWord, fieldEndianness);
+        curOffset_ += sizeof(uint32_t);
+    }
+
+    // Note: this function will trigger a seek
+    void read(u8* outBuffer, u32 numBytes)
+    {
+        const u16 sectionId = convertOffsetToSectionId(curOffset_);
+        u32 offsetWithinSection = curOffset_ % BOX_BYTES_PER_SECTION;
+        fseek(saveFile_, saveMetadata_.sectionMap_[sectionId] + offsetWithinSection, SEEK_SET);
+
+        u32 bytesToRead = (numBytes > (BOX_BYTES_PER_SECTION - offsetWithinSection)) ? (BOX_BYTES_PER_SECTION - offsetWithinSection) : numBytes;
+        fread(outBuffer, 1, bytesToRead, saveFile_);
+        curOffset_ += bytesToRead;
+        numBytes -= bytesToRead;
+
+        if(numBytes > 0)
+        {
+            // we need to read from the next section
+            // calling read recursively should do this for us, because the new offset ends up in the next section
+            // and a seek will be triggered
+            read(outBuffer + bytesToRead, numBytes);
+        }
+    }
+
+    // Note: this function will trigger a seek
+    void write(const u8* inBuffer, u32 numBytes)
+    {
+        const u16 sectionId = convertOffsetToSectionId(curOffset_);
+        u32 offsetWithinSection = curOffset_ % BOX_BYTES_PER_SECTION;
+        fseek(saveFile_, saveMetadata_.sectionMap_[sectionId] + offsetWithinSection, SEEK_SET);
+
+        u32 bytesToWrite = (numBytes > (BOX_BYTES_PER_SECTION - offsetWithinSection)) ? (BOX_BYTES_PER_SECTION - offsetWithinSection) : numBytes;
+        fwrite(inBuffer, 1, bytesToWrite, saveFile_);
+        curOffset_ += bytesToWrite;
+        numBytes -= bytesToWrite;
+
+        // mark the current section as modified.
+        saveMetadata_.sectionModified_[sectionId] = true;
+
+        if(numBytes > 0)
+        {
+            // we need to write to the next section
+            // calling write recursively should do this for us, because the new offset ends up in the next section
+            // and a seek will be triggered
+            write(inBuffer + bytesToWrite, numBytes);
+        }
+    }
+protected:
+private:
+    u16 convertOffsetToSectionId(u32 offset) const
+    {
+        // we know that the first box section starts at section id 5, 
+        // and that each section can store BOX_BYTES_PER_SECTION bytes (except for the last one)
+        return (offset / BOX_BYTES_PER_SECTION) + FIRST_BOX_SECTION_ID;;
+    }
+
+    Gen3SaveMetadata& saveMetadata_;
+    FILE* saveFile_;
+    u32 curOffset_;
+};
+
+/**
+ * @brief This function searches through the save file to find the
+ * current save slot and maps the sections within that save slot.
+ */
+static void indexSave(FILE* saveFile, Gen3SaveMetadata& saveMetadata)
+{
+    u32 saveCountA, saveCountB;
+    u16 sectionId;
+
+    // establish currentSaveoffset by comparing the save counts of both save slots
+    fseek(saveFile, SAVE_A_OFFSET + SAVE_INDEX_OFFSET, SEEK_SET);
+    readUint32FromFile(saveFile, saveCountA, Endianness::LITTLE);
+    fseek(saveFile, SAVE_B_OFFSET + SAVE_INDEX_OFFSET, SEEK_SET);
+    readUint32FromFile(saveFile, saveCountB, Endianness::LITTLE);
+
+    saveMetadata.currentSaveOffset_ = (saveCountA >= saveCountB) ? SAVE_A_OFFSET : SAVE_B_OFFSET;
+
+    // now let's map the sections.
+    // The sections within the save slot are rotated on every save. So the save doesn't 
+    // start at the first section. However, the next sections do follow sequentially.
+    // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#Section_ID
+    fseek(saveFile, saveMetadata.currentSaveOffset_ + SECTION_ID_OFFSET, SEEK_SET);
+    readUint16FromFile(saveFile, sectionId, Endianness::LITTLE);
+    for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
+    {
+        saveMetadata.sectionMap_[sectionId] = saveMetadata.currentSaveOffset_ + (i * SECTION_SIZE);
+        sectionId = (sectionId + 1) % NUM_SAVE_SECTIONS;
+    }
+    
+    // initialize all sections as unmodified
+    memset(saveMetadata.sectionModified_, 0, sizeof(saveMetadata.sectionModified_));
+
+    // now establish the current PC box index
+    seekToSectionOffset(saveFile, saveMetadata, FIRST_BOX_SECTION_ID, 0);
+    readUint32FromFile(saveFile, saveMetadata.currentPcBoxIndex_, Endianness::LITTLE);
+}
+
+Gen3SaveFileManager::Gen3SaveFileManager(FILE *saveFile)
+    : saveMetadata_()
+    , saveFile_(saveFile)
+{
+    indexSave(saveFile_, saveMetadata_);
+}
+
+Gen3SaveFileManager::~Gen3SaveFileManager()
+{
+}
+
+u32 Gen3SaveFileManager::getCurrentBoxIndex() const
+{
+    return saveMetadata_.currentPcBoxIndex_;
+}
+
+u32 Gen3SaveFileManager::addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon)
+{
+    Gen3BoxBufferManager boxBufferManager(saveMetadata_, saveFile_);
+    u32 personalityValue;
+
+    // make sure the pokemon is encrypted first
+    pokemon.encryptSubstructures();
+
+    // seek to the start of the box
+    const u32 boxStartOffset = boxIndex * (MONS_PER_BOX * SINGLE_MON_BYTES_IN_BOX);
+    boxBufferManager.seek(boxStartOffset);
+    
+    // find an empty slot in the box by looking for a pokemon with personality value of 0.
+    for(unsigned i=0; i < MONS_PER_BOX; ++i)
+    {
+        // TODO: readUint32FromFile() needs a file seek first
+        boxBufferManager.readUint32(personalityValue, Endianness::LITTLE);
+        boxBufferManager.rewind(sizeof(uint32_t));
+
+        if(personalityValue == 0) // this slot is empty, we can write our pokemon here
+        {
+            boxBufferManager.write(pokemon.dataArrayPtr, SINGLE_MON_BYTES_IN_BOX); // write the pokemon data to the box
+            return i; // return the index within the box where we added the pokemon
+        }
+        // note that the readUint32FromFile() call did not advance the internal offset
+        // of boxBufferManager. So we can just seek immediately to the next pokemon slot
+        // by advancing the offset by the size of a pokemon. 
+        boxBufferManager.advance(SINGLE_MON_BYTES_IN_BOX);
+    }
+    return UINT32_MAX;
+}
+
+bool Gen3SaveFileManager::removePokemonAtBoxIndex(int boxIndex, unsigned pokemonIndex)
+{
+    Gen3BoxBufferManager boxBufferManager(saveMetadata_, saveFile_);
+    u8 emptyData[SINGLE_MON_BYTES_IN_BOX];
+    u32 personalityValue;
+
+    memset(emptyData, 0, sizeof(emptyData));
+
+     // seek to the start of the pokemon slot we want to remove
+    const u32 boxStartOffset = boxIndex * (MONS_PER_BOX * SINGLE_MON_BYTES_IN_BOX);
+    const u32 offsetWithinBox = pokemonIndex * SINGLE_MON_BYTES_IN_BOX;
+    boxBufferManager.seek(boxStartOffset + offsetWithinBox);
+
+    boxBufferManager.readUint32(personalityValue, Endianness::LITTLE);
+    boxBufferManager.rewind(sizeof(uint32_t));
+    if(personalityValue == 0) // this slot is already empty, return false to indicate that we did not remove a pokemon
+    {
+        return false;
+    }
+
+    // overwrite the pokemon data with empty data to "remove" it from the box
+    boxBufferManager.write(emptyData, SINGLE_MON_BYTES_IN_BOX); 
+
+    return true;
+}
+
+void Gen3SaveFileManager::finishSave()
+{
+    for(unsigned i = 0; i < NUM_BOX_SECTIONS; ++i)
+    {
+        if(saveMetadata_.sectionModified_[i])
+        {
+            updateSectionChecksum(saveFile_, saveMetadata_, i);
+        }
+    }
+}
