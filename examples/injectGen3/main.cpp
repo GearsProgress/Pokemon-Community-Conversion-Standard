@@ -7,7 +7,7 @@
 
 static void print_usage()
 {
-    printf("Usage: injectGen3 <save_file_path> <path/to/file.pk3> <box_index>\n");
+    printf("Usage: injectGen3IntoBox <save_file_path> <path/to/file.pk3> <box_index>\n");
 }
 
 static long readFileIntoBuffer(const char* filePath, uint8_t *buffer, size_t bufferSize)
@@ -54,10 +54,19 @@ int main(int argc, char **argv)
 
     pokemon.loadData(pk3Buffer, false);
 
-    saveManager.addPokemonToBox(boxIndex, pokemon);
+    unsigned result = saveManager.addPokemonToBox(boxIndex, pokemon);
     saveManager.finishSave();
 
     fclose(savFile);
+
+    if(result != UINT32_MAX)
+    {
+        printf("Successfully injected Pokémon into box %d at slot %u\n", boxIndex, result + 1);
+    }
+    else
+    {
+        printf("Failed to inject Pokémon into box %d because the box is full\n", boxIndex);
+    }
 
     return EXIT_SUCCESS;
 }

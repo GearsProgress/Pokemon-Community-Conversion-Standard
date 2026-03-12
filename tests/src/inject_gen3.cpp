@@ -45,7 +45,7 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
         fclose(savFile);
     }
 
-    SECTION("The first slot of box 2 is occupied")
+    SECTION("The first slot of box 3 is occupied")
     {
         FILE *savFile = tmpfile();
         // first write zeros to the file to create a blank save file
@@ -71,4 +71,34 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
 
         fclose(savFile);
     }
+}
+
+TEST_CASE("Gen3 Pokemon box deletion test", "[unit][gen3][deletion][box]")
+{
+    const u8 zeros[128 * 1024] = {0};
+    u8 comparisonBuffer[32];
+
+    FILE *savFile = tmpfile();
+    // first write zeros to the file to create a blank save file
+    fwrite(zeros, 1, sizeof(zeros), savFile);
+
+    u32 section6Offset = 6 * 4096; // each section is 4096 bytes
+    u32 boxOffsetInSection = 836;
+    fseek(savFile, section6Offset + boxOffsetInSection, SEEK_SET);
+    // skip the first box slot
+    fseek(savFile, SINGLE_MON_BYTES_IN_BOX, SEEK_CUR);
+
+    fwrite(g3_bulbasaur_data, 1, sizeof(comparisonBuffer), savFile);
+
+    Gen3SaveFileManager saveManager(savFile);
+    saveManager.removePokemonAtBoxIndex(2, 1);
+    saveManager.finishSave();
+
+    // now validate
+    fseek(savFile, section6Offset + boxOffsetInSection + SINGLE_MON_BYTES_IN_BOX, SEEK_SET);
+    fread(comparisonBuffer, 1, sizeof(comparisonBuffer), savFile);
+
+    REQUIRE(memcmp(comparisonBuffer, zeros, sizeof(comparisonBuffer)) == 0);
+
+    fclose(savFile);
 }
