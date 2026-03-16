@@ -23,7 +23,7 @@ define make_directory
 endef
 
 # Target executable
-TARGET := injectGen3IntoBox
+TARGET := isNationalDexUnlocked
 
 # Phony targets
 .PHONY: all clean

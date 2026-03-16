@@ -28,6 +28,9 @@ public:
 
     unsigned addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon) override;
     bool removePokemonAtBoxIndex(int boxIndex, unsigned pokemonIndex) override;
+    
+    bool isNationalDexUnlocked(Game game) const override;
+    void unlockNationalDex(Game game) override;
 
     void finishSave() override;
 protected:

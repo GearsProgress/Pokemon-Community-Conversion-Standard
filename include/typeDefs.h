@@ -422,6 +422,7 @@ enum PokeBall
 
 enum Game
 {
+    INVALID = 0,
     SAPPHIRE = 1,
     RUBY,
     EMERALD,

@@ -30,6 +30,16 @@ public:
     virtual bool removePokemonAtBoxIndex(int boxIndex, unsigned pokemonIndex) = 0;
 
     /**
+     * @brief This function returns whether the national dex is unlocked in the save file.
+     */
+    virtual bool isNationalDexUnlocked(Game game) const = 0;
+
+    /**
+     * @brief This function will unlock the national dex
+     */
+    virtual void unlockNationalDex(Game game) = 0;
+
+    /**
      * @brief This function should be called whenever we are done modifying the save file.
      * It will update the checksums of any modified sections.
      * 

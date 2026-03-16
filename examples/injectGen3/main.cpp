@@ -23,7 +23,10 @@ static long readFileIntoBuffer(const char* filePath, uint8_t *buffer, size_t buf
     long fileSize = ftell(file);
     fseek(file, 0L, SEEK_SET);
 
-    (void)fread(buffer, 1, fileSize, file);
+    if(!fread(buffer, 1, fileSize, file))
+    {
+        fileSize = 0;
+    }
     fclose(file);
 
     return fileSize;
