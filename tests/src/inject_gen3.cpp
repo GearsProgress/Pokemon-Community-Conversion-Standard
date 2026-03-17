@@ -1,5 +1,6 @@
 #include "catch_amalgamated.hpp"
-#include "Gen3SaveFileManager.h"
+#include "Gen3SaveManager.h"
+#include "Gen3SaveFileReader.h"
 #include "Gen3Pokemon.h"
 
 #include <cstdio>
@@ -26,11 +27,12 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
     SECTION("Injecting bulbasaur into box 1")
     {
         FILE *savFile = tmpfile();
+        Gen3SaveFileReader saveReader(savFile);
         // first write zeros to the file to create a blank save file
         fwrite(zeros, 1, sizeof(zeros), savFile);
         fseek(savFile, 0, SEEK_SET);
 
-        Gen3SaveFileManager saveManager(EMERALD, savFile);
+        Gen3SaveManager saveManager(EMERALD, saveReader);
 
         saveManager.addPokemonToBox(1, bulbasaur);
         saveManager.finishSave();
@@ -53,7 +55,8 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
         fwrite(zeros, 1, sizeof(zeros), savFile);
         fseek(savFile, 0, SEEK_SET);
 
-        Gen3SaveFileManager saveManager(EMERALD, savFile);
+        Gen3SaveFileReader saveReader(savFile);
+        Gen3SaveManager saveManager(EMERALD, saveReader);
 
         u32 section6Offset = 6 * 4096; // each section is 4096 bytes
         u32 boxOffsetInSection = 836;
@@ -89,7 +92,8 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection][dex]")
     fwrite(zeros, 1, sizeof(zeros), savFile);
     fseek(savFile, 0, SEEK_SET);
 
-    Gen3SaveFileManager saveManager(EMERALD, savFile);
+    Gen3SaveFileReader saveReader(savFile);
+    Gen3SaveManager saveManager(EMERALD, saveReader);
 
     saveManager.addPokemonToBox(1, bulbasaur);
     saveManager.finishSave();
@@ -146,7 +150,8 @@ TEST_CASE("Gen3 Pokemon box deletion test", "[unit][gen3][deletion][box]")
 
     fwrite(g3_bulbasaur_data, 1, sizeof(comparisonBuffer), savFile);
 
-    Gen3SaveFileManager saveManager(EMERALD, savFile);
+    Gen3SaveFileReader saveReader(savFile);
+    Gen3SaveManager saveManager(EMERALD, saveReader);
     saveManager.removePokemonAtBoxIndex(2, 1);
     saveManager.finishSave();
 

@@ -167,3 +167,28 @@ void PCCSUtils::extractLehmerCode4(u32 n, u8 out[4])
         }
     }
 }
+
+Game PCCSUtils::determineGameType(const char* param)
+{
+    if(strcasecmp(param, "ruby") == 0)
+    {
+        return RUBY;
+    }
+    else if(strcasecmp(param, "sapphire") == 0)
+    {
+        return SAPPHIRE;
+    }
+    else if(strcasecmp(param, "emerald") == 0)
+    {
+        return EMERALD;
+    }
+    else if(strcasecmp(param, "firered") == 0)
+    {
+        return FIRERED;
+    }
+    else if(strcasecmp(param, "leafgreen") == 0)
+    {
+        return LEAFGREEN;
+    }
+    return INVALID;
+}

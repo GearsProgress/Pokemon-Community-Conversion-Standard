@@ -1,5 +1,7 @@
-#include "Gen3SaveFileManager.h"
+#include "Gen3SaveManager.h"
+#include "Gen3SaveFileReader.h"
 #include "Gen3Pokemon.h"
+#include "pccs_utils.h"
 
 #include <cstdlib>
 #include <cstdio>
@@ -7,7 +9,7 @@
 
 static void print_usage()
 {
-    printf("Usage: injectGen3IntoBox <save_file_path> <path/to/file.pk3> <box_index>\n");
+    printf("Usage: injectGen3IntoBox <save_file_path> <gameType> <path/to/file.pk3> <box_index>\n");
 }
 
 static long readFileIntoBuffer(const char* filePath, uint8_t *buffer, size_t bufferSize)
@@ -35,14 +37,14 @@ static long readFileIntoBuffer(const char* filePath, uint8_t *buffer, size_t buf
 int main(int argc, char **argv)
 {
     uint8_t pk3Buffer[100 * 1024];
-    if(argc != 4)
+    if(argc != 5)
     {
         print_usage();
         return EXIT_FAILURE;
     }
 
-    const int boxIndex = std::atoi(argv[3]);
-    const long pk3FileSize = readFileIntoBuffer(argv[2], pk3Buffer, sizeof(pk3Buffer));
+    const int boxIndex = std::atoi(argv[4]);
+    const long pk3FileSize = readFileIntoBuffer(argv[3], pk3Buffer, sizeof(pk3Buffer));
 
     FILE *savFile = fopen(argv[1], "r+b");
     if(!savFile)
@@ -52,7 +54,9 @@ int main(int argc, char **argv)
     }
 
     PokemonTables table;
-    Gen3SaveFileManager saveManager(savFile);
+    Gen3SaveFileReader saveFileReader(savFile);
+    const Game game = PCCSUtils::determineGameType(argv[2]);
+    Gen3SaveManager saveManager(game, saveFileReader);
     Gen3Pokemon pokemon(&table);
 
     pokemon.loadData(pk3Buffer, false);

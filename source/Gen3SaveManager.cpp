@@ -1,6 +1,8 @@
-#include "Gen3SaveFileManager.h"
+#include "Gen3SaveManager.h"
+#include "IGen3SaveFileReader.h"
 #include "Gen3Pokemon.h"
-#include "pccs_utils.h"
+
+#include <cstring>
 
 #define SAVE_A_OFFSET       0 // Offset of Game Save A
 #define SAVE_B_OFFSET       0xE000 // Offset of Game Save B
@@ -16,55 +18,12 @@
 
 static const u16 ownedFlagsBaseOffset = 0x0028;
 
-static void readUint8FromFile(FILE* file, u8& outByte)
+static void seekToSectionOffset(IGen3SaveFileReader& saveReader, const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 offsetWithinSection)
 {
-    u8 buffer;
-    if(!fread(&buffer, 1, sizeof(buffer), file))
-    {
-        return;
-    }
-    outByte = buffer;
+    saveReader.seek(saveMetadata.sectionMap_[sectionId] + offsetWithinSection);
 }
 
-// read from file with endianness
-static void readUint16FromFile(FILE* file, u16& outWord, Endianness fieldEndianness)
-{
-    u8 buffer[2];
-    if(!fread(buffer, 1, sizeof(buffer), file))
-    {
-        return;
-    }
-    PCCSUtils::readUint16(buffer, outWord, fieldEndianness);
-}
-
-static void readUint32FromFile(FILE* file, u32& outDWord, Endianness fieldEndianness)
-{
-    u8 buffer[4];
-    if(!fread(buffer, 1, sizeof(buffer), file))
-    {
-        return;
-    }
-    PCCSUtils::readUint32(buffer, outDWord, fieldEndianness);
-}
-
-static void writeUint8ToFile(FILE* file, u8 value)
-{
-    fwrite(&value, 1, sizeof(value), file);
-}
-
-static void writeUint16ToFile(FILE* file, u16 value, Endianness fieldEndianness)
-{
-    u8 buffer[2];
-    PCCSUtils::writeUint16(buffer, value, fieldEndianness);
-    fwrite(buffer, 1, sizeof(buffer), file);
-}
-
-static void seekToSectionOffset(FILE* saveFile, const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 offsetWithinSection)
-{
-    fseek(saveFile, saveMetadata.sectionMap_[sectionId] + offsetWithinSection, SEEK_SET);
-}
-
-static u16 calculateSectionChecksum(FILE* saveFile, u8 sectionId)
+static u16 calculateSectionChecksum(IGen3SaveFileReader& saveReader, u8 sectionId)
 {
     unsigned num_bytes_to_checksum;
     u32 checksum = 0;
@@ -89,41 +48,41 @@ static u16 calculateSectionChecksum(FILE* saveFile, u8 sectionId)
     // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#Checksum
     for(unsigned i = 0; i < num_bytes_to_checksum; i += sizeof(u32))
     {
-        readUint32FromFile(saveFile, cur, Endianness::LITTLE);
+        saveReader.readUint32(cur, Endianness::LITTLE);
         checksum += cur;
     }
     const u16 reduced_checksum = ((checksum & 0xFFFF0000) >> 16) + (checksum & 0x0000FFFF);
 
     // rewind back to where we started.
-    fseek(saveFile, -static_cast<long>(num_bytes_to_checksum), SEEK_CUR);
+    saveReader.rewind(num_bytes_to_checksum);
 
     return reduced_checksum;
 }
 
 // validates the current section checksum.
 // Note: the caller needs to seek to the start of the section.
-static bool validateSectionChecksum(FILE* saveFile, u8 sectionId)
+static bool validateSectionChecksum(IGen3SaveFileReader& saveReader, u8 sectionId)
 {
     u16 stored_checksum, calculated_checksum;
 
-    fseek(saveFile, SECTION_CHECKSUM_OFFSET, SEEK_CUR);
-    readUint16FromFile(saveFile, stored_checksum, Endianness::LITTLE);
+    saveReader.seek(SECTION_CHECKSUM_OFFSET);
+    saveReader.readUint16(stored_checksum, Endianness::LITTLE);
     
     // return to the start of the section
     const long rewindAmount = -static_cast<long>(SECTION_CHECKSUM_OFFSET + sizeof(u16));
-    fseek(saveFile, rewindAmount, SEEK_CUR);
+    saveReader.rewind(rewindAmount);
 
-    calculated_checksum = calculateSectionChecksum(saveFile, sectionId);
+    calculated_checksum = calculateSectionChecksum(saveReader, sectionId);
     return (stored_checksum == calculated_checksum);
 }
 
-static void updateSectionChecksum(FILE* saveFile, const Gen3SaveMetadata& saveMetadata, u8 sectionId)
+static void updateSectionChecksum(IGen3SaveFileReader& saveReader, const Gen3SaveMetadata& saveMetadata, u8 sectionId)
 {
-    seekToSectionOffset(saveFile, saveMetadata, sectionId, 0);
-    u16 new_checksum = calculateSectionChecksum(saveFile, sectionId);
+    seekToSectionOffset(saveReader, saveMetadata, sectionId, 0);
+    u16 new_checksum = calculateSectionChecksum(saveReader, sectionId);
 
-    seekToSectionOffset(saveFile, saveMetadata, sectionId, SECTION_CHECKSUM_OFFSET);
-    writeUint16ToFile(saveFile, new_checksum, Endianness::LITTLE);
+    seekToSectionOffset(saveReader, saveMetadata, sectionId, SECTION_CHECKSUM_OFFSET);
+    saveReader.writeUint16(new_checksum, Endianness::LITTLE);
 }
 
 static void getNationalDexUnlockFieldOffsets(Game game, u32& offsetFieldA, u32& offsetFieldB, u32& offsetFieldC)
@@ -183,23 +142,23 @@ static void getSeenFlagOffsetsForGame(Game game, u32& offsetFieldA, u32& offsetF
     }
 }
 
-static bool getBitFlag(FILE* saveFile, const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex)
+static bool getBitFlag(IGen3SaveFileReader& saveReader, const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex)
 {
     u8 flagByte;
 
-    seekToSectionOffset(saveFile, saveMetadata, sectionId, flagBaseOffset + (flagIndex / 8));
-    readUint8FromFile(saveFile, flagByte);
+    seekToSectionOffset(saveReader, saveMetadata, sectionId, flagBaseOffset + (flagIndex / 8));
+    saveReader.readUint8(flagByte);
 
     return (flagByte >> (flagIndex & 7)) & 1;
 }
 
-static void setBitFlag(FILE* saveFile, Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex, bool enabled)
+static void setBitFlag(IGen3SaveFileReader& saveReader, Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex, bool enabled)
 {
     u8 flagByte;
 
-    seekToSectionOffset(saveFile, saveMetadata, sectionId, flagBaseOffset + (flagIndex / 8));
-    readUint8FromFile(saveFile, flagByte);
-    fseek(saveFile, -1, SEEK_CUR);
+    seekToSectionOffset(saveReader, saveMetadata, sectionId, flagBaseOffset + (flagIndex / 8));
+    saveReader.readUint8(flagByte);
+    saveReader.rewind(1);
 
     if(enabled)
     {
@@ -210,7 +169,7 @@ static void setBitFlag(FILE* saveFile, Gen3SaveMetadata& saveMetadata, u8 sectio
         flagByte &= ~(1 << (flagIndex & 7));
     }
 
-    writeUint8ToFile(saveFile, flagByte);
+    saveReader.writeUint8(flagByte);
 
     saveMetadata.sectionModified_[sectionId] = true;
 }
@@ -230,9 +189,9 @@ static void setBitFlag(FILE* saveFile, Gen3SaveMetadata& saveMetadata, u8 sectio
 class Gen3BoxBufferManager
 {
 public:
-    Gen3BoxBufferManager(Gen3SaveMetadata& saveMetadata, FILE* saveFile)
+    Gen3BoxBufferManager(Gen3SaveMetadata& saveMetadata, IGen3SaveFileReader& saveReader)
         : saveMetadata_(saveMetadata)
-        , saveFile_(saveFile)
+        , saveReader_(saveReader)
     {
     }
 
@@ -246,24 +205,24 @@ public:
 
         const u16 sectionId = convertOffsetToSectionId(curOffset_);
         u32 offsetWithinSection = curOffset_ % BOX_BYTES_PER_SECTION;
-        fseek(saveFile_, saveMetadata_.sectionMap_[sectionId] + offsetWithinSection, SEEK_SET);
+        saveReader_.seek(saveMetadata_.sectionMap_[sectionId] + offsetWithinSection);
     }
 
     void rewind(u32 numBytes)
     {
-        fseek(saveFile_, -static_cast<long>(numBytes), SEEK_CUR);
+        saveReader_.rewind(numBytes);
         curOffset_ -= numBytes;
     }
 
     void advance(u32 numBytes)
     {
-        fseek(saveFile_, static_cast<long>(numBytes), SEEK_CUR);
+        saveReader_.advance(numBytes);
         curOffset_ += numBytes;
     }
 
     void readUint32(u32& outDWord, Endianness fieldEndianness)
     {
-        readUint32FromFile(saveFile_, outDWord, fieldEndianness);
+        saveReader_.readUint32(outDWord, fieldEndianness);
         curOffset_ += sizeof(u32);
     }
 
@@ -272,10 +231,10 @@ public:
     {
         const u16 sectionId = convertOffsetToSectionId(curOffset_);
         u32 offsetWithinSection = curOffset_ % BOX_BYTES_PER_SECTION;
-        fseek(saveFile_, saveMetadata_.sectionMap_[sectionId] + offsetWithinSection, SEEK_SET);
+        saveReader_.seek(saveMetadata_.sectionMap_[sectionId] + offsetWithinSection);
 
         u32 bytesToRead = (numBytes > (BOX_BYTES_PER_SECTION - offsetWithinSection)) ? (BOX_BYTES_PER_SECTION - offsetWithinSection) : numBytes;
-        fread(outBuffer, 1, bytesToRead, saveFile_);
+        saveReader_.read(outBuffer, bytesToRead);
         curOffset_ += bytesToRead;
         numBytes -= bytesToRead;
 
@@ -293,10 +252,10 @@ public:
     {
         const u16 sectionId = convertOffsetToSectionId(curOffset_);
         u32 offsetWithinSection = curOffset_ % BOX_BYTES_PER_SECTION;
-        fseek(saveFile_, saveMetadata_.sectionMap_[sectionId] + offsetWithinSection, SEEK_SET);
+        saveReader_.seek(saveMetadata_.sectionMap_[sectionId] + offsetWithinSection);
 
         u32 bytesToWrite = (numBytes > (BOX_BYTES_PER_SECTION - offsetWithinSection)) ? (BOX_BYTES_PER_SECTION - offsetWithinSection) : numBytes;
-        fwrite(inBuffer, 1, bytesToWrite, saveFile_);
+        saveReader_.write(inBuffer, bytesToWrite);
         curOffset_ += bytesToWrite;
         numBytes -= bytesToWrite;
 
@@ -320,8 +279,8 @@ private:
         return (offset / BOX_BYTES_PER_SECTION) + FIRST_BOX_SECTION_ID;;
     }
 
-    Gen3SaveMetadata& saveMetadata_;
-    FILE* saveFile_;
+    Gen3SaveMetadata &saveMetadata_;
+    IGen3SaveFileReader &saveReader_;
     u32 curOffset_;
 };
 
@@ -329,15 +288,15 @@ private:
  * @brief This function picks the latest save slot from the save file,
  * taking empty/corrupted slots into account.
  */
-static u32 pickSaveSlot(FILE *saveFile)
+static u32 pickSaveSlot(IGen3SaveFileReader& saveReader)
 {
     u32 saveCountA, saveCountB;
     bool saveAValid, saveBValid;
     
     // deal with empty/corrupted slots by validating the checksum of the first section.
-    saveAValid = validateSectionChecksum(saveFile, 0);
-    fseek(saveFile, SAVE_B_OFFSET, SEEK_SET);
-    saveBValid = validateSectionChecksum(saveFile, 0);
+    saveAValid = validateSectionChecksum(saveReader, 0);
+    saveReader.seek(SAVE_B_OFFSET);
+    saveBValid = validateSectionChecksum(saveReader, 0);
 
     if(!saveAValid)
     {
@@ -350,10 +309,10 @@ static u32 pickSaveSlot(FILE *saveFile)
 
     // both are valid.
     // establish currentSaveoffset by comparing the save counts of both save slots
-    fseek(saveFile, SAVE_A_OFFSET + SAVE_INDEX_OFFSET, SEEK_SET);
-    readUint32FromFile(saveFile, saveCountA, Endianness::LITTLE);
-    fseek(saveFile, SAVE_B_OFFSET + SAVE_INDEX_OFFSET, SEEK_SET);
-    readUint32FromFile(saveFile, saveCountB, Endianness::LITTLE);
+    saveReader.seek(SAVE_A_OFFSET + SAVE_INDEX_OFFSET);
+    saveReader.readUint32(saveCountA, Endianness::LITTLE);
+    saveReader.seek(SAVE_B_OFFSET + SAVE_INDEX_OFFSET);
+    saveReader.readUint32(saveCountB, Endianness::LITTLE);
 
     return (saveCountA >= saveCountB) ? SAVE_A_OFFSET : SAVE_B_OFFSET;
 }
@@ -362,18 +321,18 @@ static u32 pickSaveSlot(FILE *saveFile)
  * @brief This function searches through the save file to find the
  * current save slot and maps the sections within that save slot.
  */
-static void indexSave(FILE* saveFile, Gen3SaveMetadata& saveMetadata)
+static void indexSave(IGen3SaveFileReader& saveReader, Gen3SaveMetadata& saveMetadata)
 {
     u16 sectionId;
 
-    saveMetadata.currentSaveOffset_ = pickSaveSlot(saveFile);
+    saveMetadata.currentSaveOffset_ = pickSaveSlot(saveReader);
 
     // now let's map the sections.
     // The sections within the save slot are rotated on every save. So the save doesn't 
     // start at the first section. However, the next sections do follow sequentially.
     // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#Section_ID
-    fseek(saveFile, saveMetadata.currentSaveOffset_ + SECTION_ID_OFFSET, SEEK_SET);
-    readUint16FromFile(saveFile, sectionId, Endianness::LITTLE);
+    saveReader.seek(saveMetadata.currentSaveOffset_ + SECTION_ID_OFFSET);
+    saveReader.readUint16(sectionId, Endianness::LITTLE);
     for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
     {
         saveMetadata.sectionMap_[sectionId] = saveMetadata.currentSaveOffset_ + (i * SECTION_SIZE);
@@ -384,30 +343,30 @@ static void indexSave(FILE* saveFile, Gen3SaveMetadata& saveMetadata)
     memset(saveMetadata.sectionModified_, 0, sizeof(saveMetadata.sectionModified_));
 
     // now establish the current PC box index
-    seekToSectionOffset(saveFile, saveMetadata, FIRST_BOX_SECTION_ID, 0);
-    readUint32FromFile(saveFile, saveMetadata.currentPcBoxIndex_, Endianness::LITTLE);
+    seekToSectionOffset(saveReader, saveMetadata, FIRST_BOX_SECTION_ID, 0);
+    saveReader.readUint32(saveMetadata.currentPcBoxIndex_, Endianness::LITTLE);
 }
 
-Gen3SaveFileManager::Gen3SaveFileManager(Game gameType, FILE *saveFile)
+Gen3SaveManager::Gen3SaveManager(Game gameType, IGen3SaveFileReader &saveReader)
     : gameType_(gameType)
     , saveMetadata_()
-    , saveFile_(saveFile)
+    , saveReader_(saveReader)
 {
-    indexSave(saveFile_, saveMetadata_);
+    indexSave(saveReader_, saveMetadata_);
 }
 
-Gen3SaveFileManager::~Gen3SaveFileManager()
+Gen3SaveManager::~Gen3SaveManager()
 {
 }
 
-u32 Gen3SaveFileManager::getCurrentBoxIndex() const
+u32 Gen3SaveManager::getCurrentBoxIndex() const
 {
     return saveMetadata_.currentPcBoxIndex_;
 }
 
-u32 Gen3SaveFileManager::addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon)
+u32 Gen3SaveManager::addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon)
 {
-    Gen3BoxBufferManager boxBufferManager(saveMetadata_, saveFile_);
+    Gen3BoxBufferManager boxBufferManager(saveMetadata_, saveReader_);
     Gen3Pokemon decryptedCopy(pokemon);
     u32 personalityValue;
 
@@ -444,9 +403,9 @@ u32 Gen3SaveFileManager::addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon)
     return UINT32_MAX;
 }
 
-bool Gen3SaveFileManager::removePokemonAtBoxIndex(int boxIndex, unsigned pokemonIndex)
+bool Gen3SaveManager::removePokemonAtBoxIndex(int boxIndex, unsigned pokemonIndex)
 {
-    Gen3BoxBufferManager boxBufferManager(saveMetadata_, saveFile_);
+    Gen3BoxBufferManager boxBufferManager(saveMetadata_, saveReader_);
     u8 emptyData[SINGLE_MON_BYTES_IN_BOX];
     u32 personalityValue;
 
@@ -470,7 +429,7 @@ bool Gen3SaveFileManager::removePokemonAtBoxIndex(int boxIndex, unsigned pokemon
     return true;
 }
 
-bool Gen3SaveFileManager::isNationalDexUnlocked() const
+bool Gen3SaveManager::isNationalDexUnlocked() const
 {
     u32 offsetFieldA, offsetFieldB, offsetFieldC;
     u16 fieldA, fieldC;
@@ -478,24 +437,24 @@ bool Gen3SaveFileManager::isNationalDexUnlocked() const
 
     getNationalDexUnlockFieldOffsets(gameType_, offsetFieldA, offsetFieldB, offsetFieldC);
     
-    seekToSectionOffset(saveFile_, saveMetadata_, 0, offsetFieldA);
+    seekToSectionOffset(saveReader_, saveMetadata_, 0, offsetFieldA);
     if(gameType_ == Game::FIRERED || gameType_ == Game::LEAFGREEN)
     {
         u8 fieldAFRLG;
         // in FRLG, the field is only 1 byte
-        readUint8FromFile(saveFile_, fieldAFRLG);
+        saveReader_.readUint8(fieldAFRLG);
         fieldA = fieldAFRLG;
     }
     else
     {
-        readUint16FromFile(saveFile_, fieldA, Endianness::LITTLE);
+        saveReader_.readUint16(fieldA, Endianness::LITTLE);
     }
 
-    seekToSectionOffset(saveFile_, saveMetadata_, 2, offsetFieldB);
-    readUint8FromFile(saveFile_, fieldB);
+    seekToSectionOffset(saveReader_, saveMetadata_, 2, offsetFieldB);
+    saveReader_.readUint8(fieldB);
 
-    seekToSectionOffset(saveFile_, saveMetadata_, 2, offsetFieldC);
-    readUint16FromFile(saveFile_, fieldC, Endianness::LITTLE);
+    seekToSectionOffset(saveReader_, saveMetadata_, 2, offsetFieldC);
+    saveReader_.readUint16(fieldC, Endianness::LITTLE);
 
     // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#National_Pok%C3%A9dex
     if(gameType_ == Game::FIRERED || gameType_ == Game::LEAFGREEN)
@@ -508,7 +467,7 @@ bool Gen3SaveFileManager::isNationalDexUnlocked() const
     }
 }
 
-void Gen3SaveFileManager::setNationalDexUnlocked(bool shouldBeUnlocked)
+void Gen3SaveManager::setNationalDexUnlocked(bool shouldBeUnlocked)
 {
     u32 offsetFieldA, offsetFieldB, offsetFieldC;
     u8 fieldB;
@@ -518,20 +477,20 @@ void Gen3SaveFileManager::setNationalDexUnlocked(bool shouldBeUnlocked)
     // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#National_Pok%C3%A9dex
     getNationalDexUnlockFieldOffsets(gameType_, offsetFieldA, offsetFieldB, offsetFieldC);
 
-    seekToSectionOffset(saveFile_, saveMetadata_, 0, offsetFieldA);
+    seekToSectionOffset(saveReader_, saveMetadata_, 0, offsetFieldA);
     if(isFRLG)
     {
         newValue = shouldBeUnlocked ? 0xB9 : 0;
-        writeUint8ToFile(saveFile_, static_cast<u8>(newValue));
+        saveReader_.writeUint8(static_cast<u8>(newValue));
     }
     else
     {
         newValue = shouldBeUnlocked ? 0xDA01 : 0;
-        writeUint16ToFile(saveFile_, newValue, Endianness::LITTLE);
+        saveReader_.writeUint16(newValue, Endianness::LITTLE);
     }
 
-    seekToSectionOffset(saveFile_, saveMetadata_, 2, offsetFieldB);
-    readUint8FromFile(saveFile_, fieldB);
+    seekToSectionOffset(saveReader_, saveMetadata_, 2, offsetFieldB);
+    saveReader_.readUint8(fieldB);
 
     if(shouldBeUnlocked)
     {
@@ -542,11 +501,10 @@ void Gen3SaveFileManager::setNationalDexUnlocked(bool shouldBeUnlocked)
         fieldB &= ~(1 << 6); // clear the bit that indicates national dex is unlocked
     }
 
+    seekToSectionOffset(saveReader_, saveMetadata_, 2, offsetFieldB);
+    saveReader_.writeUint8(fieldB);
 
-    seekToSectionOffset(saveFile_, saveMetadata_, 2, offsetFieldB);
-    writeUint8ToFile(saveFile_, fieldB);
-
-    seekToSectionOffset(saveFile_, saveMetadata_, 2, offsetFieldC);
+    seekToSectionOffset(saveReader_, saveMetadata_, 2, offsetFieldC);
     if(!shouldBeUnlocked)
     {
         newValue = 0;
@@ -556,52 +514,52 @@ void Gen3SaveFileManager::setNationalDexUnlocked(bool shouldBeUnlocked)
         newValue = isFRLG ? 0x6258 : 0x0302;
     }
 
-    writeUint16ToFile(saveFile_, newValue, Endianness::LITTLE);
+    saveReader_.writeUint16(newValue, Endianness::LITTLE);
 
     saveMetadata_.sectionModified_[0] = true;
     saveMetadata_.sectionModified_[2] = true;
 }
 
-bool Gen3SaveFileManager::isPokemonOwned(u16 speciesIndex) const
+bool Gen3SaveManager::isPokemonOwned(u16 speciesIndex) const
 {
-    return getBitFlag(saveFile_, saveMetadata_, 0, ownedFlagsBaseOffset, speciesIndex - 1);
+    return getBitFlag(saveReader_, saveMetadata_, 0, ownedFlagsBaseOffset, speciesIndex - 1);
 }
 
-bool Gen3SaveFileManager::isPokemonSeen(u16 speciesIndex) const
+bool Gen3SaveManager::isPokemonSeen(u16 speciesIndex) const
 {
     const u32 flagIndex = speciesIndex - 1;
     u32 seenFlagsBaseOffsetA, seenFlagsBaseOffsetB, seenFlagsBaseOffsetC;
 
     getSeenFlagOffsetsForGame(gameType_, seenFlagsBaseOffsetA, seenFlagsBaseOffsetB, seenFlagsBaseOffsetC);
 
-    return getBitFlag(saveFile_, saveMetadata_, 0, seenFlagsBaseOffsetA, flagIndex);
+    return getBitFlag(saveReader_, saveMetadata_, 0, seenFlagsBaseOffsetA, flagIndex);
 }
 
-void Gen3SaveFileManager::setPokemonOwned(u16 speciesIndex, bool owned)
+void Gen3SaveManager::setPokemonOwned(u16 speciesIndex, bool owned)
 {
     const u16 ownedFlagsBaseOffset = 0x0028;
-    setBitFlag(saveFile_, saveMetadata_, 0, ownedFlagsBaseOffset, speciesIndex - 1, owned);
+    setBitFlag(saveReader_, saveMetadata_, 0, ownedFlagsBaseOffset, speciesIndex - 1, owned);
 }
 
-void Gen3SaveFileManager::setPokemonSeen(u16 speciesIndex, bool seen)
+void Gen3SaveManager::setPokemonSeen(u16 speciesIndex, bool seen)
 {
     const u32 flagIndex = speciesIndex - 1;
     u32 seenFlagsBaseOffsetA, seenFlagsBaseOffsetB, seenFlagsBaseOffsetC;
 
     getSeenFlagOffsetsForGame(gameType_, seenFlagsBaseOffsetA, seenFlagsBaseOffsetB, seenFlagsBaseOffsetC);
 
-    setBitFlag(saveFile_, saveMetadata_, 0, seenFlagsBaseOffsetA, flagIndex, seen);
-    setBitFlag(saveFile_, saveMetadata_, 1, seenFlagsBaseOffsetB, flagIndex, seen);
-    setBitFlag(saveFile_, saveMetadata_, 4, seenFlagsBaseOffsetC, flagIndex, seen);
+    setBitFlag(saveReader_, saveMetadata_, 0, seenFlagsBaseOffsetA, flagIndex, seen);
+    setBitFlag(saveReader_, saveMetadata_, 1, seenFlagsBaseOffsetB, flagIndex, seen);
+    setBitFlag(saveReader_, saveMetadata_, 4, seenFlagsBaseOffsetC, flagIndex, seen);
 }
 
-void Gen3SaveFileManager::finishSave()
+void Gen3SaveManager::finishSave()
 {
     for(unsigned i = 0; i < NUM_BOX_SECTIONS; ++i)
     {
         if(saveMetadata_.sectionModified_[i])
         {
-            updateSectionChecksum(saveFile_, saveMetadata_, i);
+            updateSectionChecksum(saveReader_, saveMetadata_, i);
         }
     }
 }

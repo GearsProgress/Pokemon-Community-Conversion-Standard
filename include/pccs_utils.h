@@ -158,6 +158,12 @@ u8* writeUint32(u8 *dstBuffer, u32 bytes, Endianness fieldEndianness);
  */
 void extractLehmerCode4(u32 n, u8 out[4]);
 
+/**
+ * @brief Determine a game type based on a string parameter. The comparison is case-insensitive.
+ * This is useful for cmdline tools.
+ */
+Game determineGameType(const char* param);
+
 }
 
 #endif
