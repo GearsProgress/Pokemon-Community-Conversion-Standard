@@ -14,6 +14,8 @@
 #define MONS_PER_BOX 30
 #define SINGLE_MON_BYTES_IN_BOX 80
 
+static const u16 ownedFlagsBaseOffset = 0x0028;
+
 static void readUint8FromFile(FILE* file, u8& outByte)
 {
     u8 buffer;
@@ -152,6 +154,65 @@ static void getNationalDexUnlockFieldOffsets(Game game, u32& offsetFieldA, u32& 
         offsetFieldC = 0;
         break;
     }
+}
+
+static void getSeenFlagOffsetsForGame(Game game, u32& offsetFieldA, u32& offsetFieldB, u32& offsetFieldC)
+{
+    offsetFieldA = 0x005C;
+
+    switch(game)
+    {
+    case Game::RUBY:
+    case Game::SAPPHIRE:
+        offsetFieldB = 0x0938;
+        offsetFieldC = 0x0C0C;
+        break;
+    case Game::EMERALD:
+        offsetFieldB = 0x0988;
+        offsetFieldC = 0x0CA4;
+        break;
+    case Game::FIRERED:
+    case Game::LEAFGREEN:
+        offsetFieldB = 0x05F8;
+        offsetFieldC = 0x0B98;
+        break;
+    default:
+        offsetFieldB = 0;
+        offsetFieldC = 0;
+        break;
+    }
+}
+
+static bool getBitFlag(FILE* saveFile, const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex)
+{
+    u8 flagByte;
+
+    seekToSectionOffset(saveFile, saveMetadata, sectionId, flagBaseOffset + (flagIndex / 8));
+    readUint8FromFile(saveFile, flagByte);
+
+    return (flagByte >> (flagIndex & 7)) & 1;
+}
+
+static void setBitFlag(FILE* saveFile, Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex, bool enabled)
+{
+    u8 flagByte;
+
+    seekToSectionOffset(saveFile, saveMetadata, sectionId, flagBaseOffset + (flagIndex / 8));
+    readUint8FromFile(saveFile, flagByte);
+    fseek(saveFile, -1, SEEK_CUR);
+
+    if(enabled)
+    {
+        flagByte |= (1 << (flagIndex & 7));
+    }
+    else
+    {
+        flagByte &= ~(1 << (flagIndex & 7));
+    }
+
+    writeUint8ToFile(saveFile, flagByte);
+
+    saveMetadata.sectionModified_[sectionId] = true;
 }
 
 /**
@@ -327,8 +388,9 @@ static void indexSave(FILE* saveFile, Gen3SaveMetadata& saveMetadata)
     readUint32FromFile(saveFile, saveMetadata.currentPcBoxIndex_, Endianness::LITTLE);
 }
 
-Gen3SaveFileManager::Gen3SaveFileManager(FILE *saveFile)
-    : saveMetadata_()
+Gen3SaveFileManager::Gen3SaveFileManager(Game gameType, FILE *saveFile)
+    : gameType_(gameType)
+    , saveMetadata_()
     , saveFile_(saveFile)
 {
     indexSave(saveFile_, saveMetadata_);
@@ -346,7 +408,12 @@ u32 Gen3SaveFileManager::getCurrentBoxIndex() const
 u32 Gen3SaveFileManager::addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon)
 {
     Gen3BoxBufferManager boxBufferManager(saveMetadata_, saveFile_);
+    Gen3Pokemon decryptedCopy(pokemon);
     u32 personalityValue;
+
+    // decrypt for species index
+    decryptedCopy.decryptSubstructures();
+    const u16 speciesIndex = decryptedCopy.getSpeciesIndexNumber();
 
     // make sure the pokemon is encrypted first
     pokemon.encryptSubstructures();
@@ -365,6 +432,8 @@ u32 Gen3SaveFileManager::addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon)
         if(personalityValue == 0) // this slot is empty, we can write our pokemon here
         {
             boxBufferManager.write(pokemon.dataArrayPtr, SINGLE_MON_BYTES_IN_BOX); // write the pokemon data to the box
+            setPokemonOwned(speciesIndex, true);
+            setPokemonSeen(speciesIndex, true);
             return i; // return the index within the box where we added the pokemon
         }
         // note that the readUint32FromFile() call did not advance the internal offset
@@ -401,16 +470,16 @@ bool Gen3SaveFileManager::removePokemonAtBoxIndex(int boxIndex, unsigned pokemon
     return true;
 }
 
-bool Gen3SaveFileManager::isNationalDexUnlocked(Game game) const
+bool Gen3SaveFileManager::isNationalDexUnlocked() const
 {
     u32 offsetFieldA, offsetFieldB, offsetFieldC;
     u16 fieldA, fieldC;
     u8 fieldB;
 
-    getNationalDexUnlockFieldOffsets(game, offsetFieldA, offsetFieldB, offsetFieldC);
+    getNationalDexUnlockFieldOffsets(gameType_, offsetFieldA, offsetFieldB, offsetFieldC);
     
     seekToSectionOffset(saveFile_, saveMetadata_, 0, offsetFieldA);
-    if(game == Game::FIRERED || game == Game::LEAFGREEN)
+    if(gameType_ == Game::FIRERED || gameType_ == Game::LEAFGREEN)
     {
         u8 fieldAFRLG;
         // in FRLG, the field is only 1 byte
@@ -429,7 +498,7 @@ bool Gen3SaveFileManager::isNationalDexUnlocked(Game game) const
     readUint16FromFile(saveFile_, fieldC, Endianness::LITTLE);
 
     // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#National_Pok%C3%A9dex
-    if(game == Game::FIRERED || game == Game::LEAFGREEN)
+    if(gameType_ == Game::FIRERED || gameType_ == Game::LEAFGREEN)
     {
         return (fieldA == 0xB9) && (fieldB & 6) && (fieldC == 0x6258);
     }
@@ -439,36 +508,91 @@ bool Gen3SaveFileManager::isNationalDexUnlocked(Game game) const
     }
 }
 
-void Gen3SaveFileManager::unlockNationalDex(Game game)
+void Gen3SaveFileManager::setNationalDexUnlocked(bool shouldBeUnlocked)
 {
     u32 offsetFieldA, offsetFieldB, offsetFieldC;
     u8 fieldB;
-    const bool isFRLG = (game == Game::FIRERED || game == Game::LEAFGREEN);
+    u16 newValue;
+    const bool isFRLG = (gameType_ == Game::FIRERED || gameType_ == Game::LEAFGREEN);
 
     // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#National_Pok%C3%A9dex
-    getNationalDexUnlockFieldOffsets(game, offsetFieldA, offsetFieldB, offsetFieldC);
+    getNationalDexUnlockFieldOffsets(gameType_, offsetFieldA, offsetFieldB, offsetFieldC);
 
     seekToSectionOffset(saveFile_, saveMetadata_, 0, offsetFieldA);
     if(isFRLG)
     {
-        writeUint8ToFile(saveFile_, 0xB9);
+        newValue = shouldBeUnlocked ? 0xB9 : 0;
+        writeUint8ToFile(saveFile_, static_cast<u8>(newValue));
     }
     else
     {
-        writeUint16ToFile(saveFile_, 0xDA01, Endianness::LITTLE);
+        newValue = shouldBeUnlocked ? 0xDA01 : 0;
+        writeUint16ToFile(saveFile_, newValue, Endianness::LITTLE);
     }
 
     seekToSectionOffset(saveFile_, saveMetadata_, 2, offsetFieldB);
     readUint8FromFile(saveFile_, fieldB);
-    fieldB |= (1 << 6); // set the bit that indicates national dex is unlocked
+
+    if(shouldBeUnlocked)
+    {
+        fieldB |= (1 << 6); // set the bit that indicates national dex is unlocked
+    }
+    else
+    {
+        fieldB &= ~(1 << 6); // clear the bit that indicates national dex is unlocked
+    }
+
+
     seekToSectionOffset(saveFile_, saveMetadata_, 2, offsetFieldB);
     writeUint8ToFile(saveFile_, fieldB);
 
     seekToSectionOffset(saveFile_, saveMetadata_, 2, offsetFieldC);
-    writeUint16ToFile(saveFile_, isFRLG ? 0x6258 : 0x0302, Endianness::LITTLE);
+    if(!shouldBeUnlocked)
+    {
+        newValue = 0;
+    }
+    else
+    {
+        newValue = isFRLG ? 0x6258 : 0x0302;
+    }
+
+    writeUint16ToFile(saveFile_, newValue, Endianness::LITTLE);
 
     saveMetadata_.sectionModified_[0] = true;
     saveMetadata_.sectionModified_[2] = true;
+}
+
+bool Gen3SaveFileManager::isPokemonOwned(u16 speciesIndex) const
+{
+    return getBitFlag(saveFile_, saveMetadata_, 0, ownedFlagsBaseOffset, speciesIndex - 1);
+}
+
+bool Gen3SaveFileManager::isPokemonSeen(u16 speciesIndex) const
+{
+    const u32 flagIndex = speciesIndex - 1;
+    u32 seenFlagsBaseOffsetA, seenFlagsBaseOffsetB, seenFlagsBaseOffsetC;
+
+    getSeenFlagOffsetsForGame(gameType_, seenFlagsBaseOffsetA, seenFlagsBaseOffsetB, seenFlagsBaseOffsetC);
+
+    return getBitFlag(saveFile_, saveMetadata_, 0, seenFlagsBaseOffsetA, flagIndex);
+}
+
+void Gen3SaveFileManager::setPokemonOwned(u16 speciesIndex, bool owned)
+{
+    const u16 ownedFlagsBaseOffset = 0x0028;
+    setBitFlag(saveFile_, saveMetadata_, 0, ownedFlagsBaseOffset, speciesIndex - 1, owned);
+}
+
+void Gen3SaveFileManager::setPokemonSeen(u16 speciesIndex, bool seen)
+{
+    const u32 flagIndex = speciesIndex - 1;
+    u32 seenFlagsBaseOffsetA, seenFlagsBaseOffsetB, seenFlagsBaseOffsetC;
+
+    getSeenFlagOffsetsForGame(gameType_, seenFlagsBaseOffsetA, seenFlagsBaseOffsetB, seenFlagsBaseOffsetC);
+
+    setBitFlag(saveFile_, saveMetadata_, 0, seenFlagsBaseOffsetA, flagIndex, seen);
+    setBitFlag(saveFile_, saveMetadata_, 1, seenFlagsBaseOffsetB, flagIndex, seen);
+    setBitFlag(saveFile_, saveMetadata_, 4, seenFlagsBaseOffsetC, flagIndex, seen);
 }
 
 void Gen3SaveFileManager::finishSave()

@@ -32,6 +32,14 @@ Gen3Pokemon::Gen3Pokemon(PokemonTables *table)
     currSubstructureLehmerCode = 0;
 };
 
+Gen3Pokemon::Gen3Pokemon(const Gen3Pokemon &other)
+    : Gen3Pokemon(other.pokeTable)
+{
+    currSubstructureLehmerCode = other.currSubstructureLehmerCode;
+    memcpy(substructOffsets, other.substructOffsets, sizeof(substructOffsets));
+    memcpy(dataArray, other.dataArray, sizeof(dataArray));
+}
+
 bool Gen3Pokemon::convertToGen3(Gen3Pokemon *g3p)
 {
     return false;

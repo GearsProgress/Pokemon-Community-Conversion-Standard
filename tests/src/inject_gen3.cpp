@@ -28,8 +28,9 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
         FILE *savFile = tmpfile();
         // first write zeros to the file to create a blank save file
         fwrite(zeros, 1, sizeof(zeros), savFile);
+        fseek(savFile, 0, SEEK_SET);
 
-        Gen3SaveFileManager saveManager(savFile);
+        Gen3SaveFileManager saveManager(EMERALD, savFile);
 
         saveManager.addPokemonToBox(1, bulbasaur);
         saveManager.finishSave();
@@ -50,8 +51,9 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
         FILE *savFile = tmpfile();
         // first write zeros to the file to create a blank save file
         fwrite(zeros, 1, sizeof(zeros), savFile);
+        fseek(savFile, 0, SEEK_SET);
 
-        Gen3SaveFileManager saveManager(savFile);
+        Gen3SaveFileManager saveManager(EMERALD, savFile);
 
         u32 section6Offset = 6 * 4096; // each section is 4096 bytes
         u32 boxOffsetInSection = 836;
@@ -73,6 +75,60 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
     }
 }
 
+TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection][dex]")
+{
+    const u8 zeros[128 * 1024] = {0};
+    u8 comparisonBuffer[32];
+    PokemonTables table;
+
+    Gen3Pokemon bulbasaur(&table);
+    bulbasaur.loadData(g3_bulbasaur_data, false);
+
+    FILE *savFile = tmpfile();
+    // first write zeros to the file to create a blank save file
+    fwrite(zeros, 1, sizeof(zeros), savFile);
+    fseek(savFile, 0, SEEK_SET);
+
+    Gen3SaveFileManager saveManager(EMERALD, savFile);
+
+    saveManager.addPokemonToBox(1, bulbasaur);
+    saveManager.finishSave();
+
+    // seek to Emeralds' owned flag (slot A)
+    fseek(savFile, 0x0028, SEEK_SET);
+    if(!fread(comparisonBuffer, 1, 1, savFile))
+    {
+        REQUIRE(false); // fail the test if we can't read the owned flags
+    }
+    REQUIRE((comparisonBuffer[0] & 0x01) != 0); // bulbasaur is owned, so the first bit should be set
+
+    // Seek to Emeralds' seen flags A (slot A)
+    fseek(savFile, 0x005C, SEEK_SET);
+    if(!fread(comparisonBuffer, 1, 1, savFile))
+    {
+        REQUIRE(false); // fail the test if we can't read the seen flags
+    }
+    REQUIRE((comparisonBuffer[0] & 0x01) != 0); // bulbasaur is seen, so the first bit should be set
+
+    // Seek to Emeralds' seen flags B (slot A)
+    fseek(savFile, 0x1988, SEEK_SET);
+    if(!fread(comparisonBuffer, 1, 1, savFile))
+    {
+        REQUIRE(false); // fail the test if we can't read the seen flags
+    }
+    REQUIRE((comparisonBuffer[0] & 0x01) != 0); // bulbasaur is seen, so the first bit should be set
+
+    // Seek to Emeralds' seen flags C (slot A)
+    fseek(savFile, 0x4CA4, SEEK_SET);
+    if(!fread(comparisonBuffer, 1, 1, savFile))
+    {
+        REQUIRE(false); // fail the test if we can't read the seen flags
+    }
+    REQUIRE((comparisonBuffer[0] & 0x01) != 0); // bulbasaur is seen, so the first bit should be set
+
+    fclose(savFile);
+}
+
 TEST_CASE("Gen3 Pokemon box deletion test", "[unit][gen3][deletion][box]")
 {
     const u8 zeros[128 * 1024] = {0};
@@ -90,7 +146,7 @@ TEST_CASE("Gen3 Pokemon box deletion test", "[unit][gen3][deletion][box]")
 
     fwrite(g3_bulbasaur_data, 1, sizeof(comparisonBuffer), savFile);
 
-    Gen3SaveFileManager saveManager(savFile);
+    Gen3SaveFileManager saveManager(EMERALD, savFile);
     saveManager.removePokemonAtBoxIndex(2, 1);
     saveManager.finishSave();
 

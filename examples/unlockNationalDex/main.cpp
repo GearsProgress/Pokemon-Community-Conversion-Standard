@@ -62,8 +62,8 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    Gen3SaveFileManager saveManager(savFile);
-    const bool isNationalDexUnlocked = saveManager.isNationalDexUnlocked(game);
+    Gen3SaveFileManager saveManager(game, savFile);
+    const bool isNationalDexUnlocked = saveManager.isNationalDexUnlocked();
 
     if(isNationalDexUnlocked)
     {
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     
-    saveManager.unlockNationalDex(game);
+    saveManager.setNationalDexUnlocked(true);
     saveManager.finishSave();
     printf("The national dex has been unlocked!\n");
     fclose(savFile);

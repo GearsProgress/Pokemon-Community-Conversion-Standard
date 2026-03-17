@@ -21,7 +21,7 @@ typedef struct Gen3SaveMetadata
 class Gen3SaveFileManager : public IGen3SaveManager
 {
 public:
-    Gen3SaveFileManager(FILE *saveFile);
+    Gen3SaveFileManager(Game gameType, FILE *saveFile);
     virtual ~Gen3SaveFileManager();
 
     u32 getCurrentBoxIndex() const override;
@@ -29,12 +29,18 @@ public:
     unsigned addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon) override;
     bool removePokemonAtBoxIndex(int boxIndex, unsigned pokemonIndex) override;
     
-    bool isNationalDexUnlocked(Game game) const override;
-    void unlockNationalDex(Game game) override;
+    bool isNationalDexUnlocked() const override;
+    void setNationalDexUnlocked(bool shouldBeUnlocked) override;
+
+    bool isPokemonOwned(u16 speciesIndex) const override;
+    bool isPokemonSeen(u16 speciesIndex) const override;
+    void setPokemonOwned(u16 speciesIndex, bool owned) override;
+    void setPokemonSeen(u16 speciesIndex, bool seen) override;
 
     void finishSave() override;
 protected:
 private:
+    Game gameType_;
     Gen3SaveMetadata saveMetadata_;
     FILE* saveFile_;
 };

@@ -32,12 +32,32 @@ public:
     /**
      * @brief This function returns whether the national dex is unlocked in the save file.
      */
-    virtual bool isNationalDexUnlocked(Game game) const = 0;
+    virtual bool isNationalDexUnlocked() const = 0;
 
     /**
      * @brief This function will unlock the national dex
      */
-    virtual void unlockNationalDex(Game game) = 0;
+    virtual void setNationalDexUnlocked(bool shouldBeUnlocked) = 0;
+
+    /**
+     * @brief This function will check the owned flag for a specific pokémon.
+     */
+    virtual bool isPokemonOwned(u16 speciesIndex) const = 0;
+
+    /**
+     * @brief This function will check the seen flag for a specific pokémon
+     */
+    virtual bool isPokemonSeen(u16 speciesIndex) const = 0;
+
+    /**
+     * @brief This function will set/unset the owned flag for a specific pokémon.
+     */
+    virtual void setPokemonOwned(u16 speciesIndex, bool owned) = 0;
+
+    /**
+     * @brief This function will set/unset the seen flag for a specific pokémon.
+     */
+    virtual void setPokemonSeen(u16 speciesIndex, bool seen) = 0;
 
     /**
      * @brief This function should be called whenever we are done modifying the save file.

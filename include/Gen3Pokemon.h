@@ -10,6 +10,7 @@ class Gen3Pokemon : public Pokemon // The class for gen 3 Pokemon
 {
 public:
     Gen3Pokemon(PokemonTables *table);
+    Gen3Pokemon(const Gen3Pokemon &other);
 
     bool convertToGen3(Gen3Pokemon *g3p);
 
