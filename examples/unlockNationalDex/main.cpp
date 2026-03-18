@@ -7,7 +7,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstdint>
-#include <strings.h>
 
 static void print_usage()
 {

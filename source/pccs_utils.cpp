@@ -1,4 +1,5 @@
 #include "pccs_utils.h"
+#include <strings.h>
 
 static const bool g_cpuLittleEndian = PCCSUtils::isCurrentCPULittleEndian();
 
