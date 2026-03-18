@@ -1,3 +1,6 @@
+#include "pccs_settings.h"
+
+#if !ON_GBA
 #include "Gen3SaveFileReader.h"
 #include "pccs_utils.h"
 
@@ -96,3 +99,4 @@ void Gen3SaveFileReader::rewind(u32 numBytes)
     fseek(saveFile_, -static_cast<long>(numBytes), SEEK_CUR);
     curOffset_ -= numBytes;
 }
+#endif
