@@ -693,7 +693,9 @@ void load_localized_charset(u16 *output_char_array, byte gen, Language lang)
 {
     u8 generation_charsets[2048];
     const u8 *input_data;
+#ifndef ON_GBA
     size_t input_size;
+#endif
 
     // in the localization_charset_indices list,
     // gen 1 starts first and every gen has 7 entries (1 per language)

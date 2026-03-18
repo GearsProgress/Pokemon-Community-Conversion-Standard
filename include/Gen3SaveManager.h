@@ -27,7 +27,7 @@ public:
 
     u32 getCurrentBoxIndex() const;
 
-    unsigned addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon);
+    u32 addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon);
     bool removePokemonAtBoxIndex(int boxIndex, unsigned pokemonIndex);
     
     bool isNationalDexUnlocked() const;
