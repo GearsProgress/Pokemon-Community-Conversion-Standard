@@ -38,6 +38,12 @@ public:
     void setPokemonOwned(u16 speciesIndex, bool owned);
     void setPokemonSeen(u16 speciesIndex, bool seen);
 
+    /**
+     * @brief This function reads the trainer name from the save file in the gen3 text encoding.
+     * The output buffer should be at least 7 bytes long to hold the trainer name.
+     */
+    void readTrainerName(u8 *outputBuffer);
+
     void finishSave();
 protected:
 private:
