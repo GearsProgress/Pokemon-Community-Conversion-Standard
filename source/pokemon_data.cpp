@@ -774,7 +774,7 @@ u16 convert_gen_3_char_to_utf16(const u16 *charset, const u8 input)
     }
 }
 
-u32 convert_utf16_to_utf8_char(u16 ch, u8* out)
+u32 convert_utf16_to_utf8_char(u16 ch, u8 *out)
 {
     if (ch < 0x80)
     {
@@ -797,27 +797,27 @@ u32 convert_utf16_to_utf8_char(u16 ch, u8* out)
     }
 }
 
-u32 convert_utf8_to_utf16_char(const u8* src, u16* out_cp)
+u32 convert_utf8_to_utf16_char(const u8 *src, u16 &out_cp)
 {
     if ((src[0] & 0x80) == 0)
     {
-        *out_cp = src[0];
+        out_cp = src[0];
         return 1;
     }
     else if ((src[0] & 0xE0) == 0xC0)
     {
-        *out_cp = ((src[0] & 0x1F) << 6) |
-                  (src[1] & 0x3F);
+        out_cp = ((src[0] & 0x1F) << 6) |
+                       (src[1] & 0x3F);
         return 2;
     }
     else if ((src[0] & 0xF0) == 0xE0)
     {
-        *out_cp = ((src[0] & 0x0F) << 12) |
-                  ((src[1] & 0x3F) << 6) |
-                  (src[2] & 0x3F);
+        out_cp = ((src[0] & 0x0F) << 12) |
+                       ((src[1] & 0x3F) << 6) |
+                       (src[2] & 0x3F);
 
         // reject surrogate range
-        if (*out_cp >= 0xD800 && *out_cp <= 0xDFFF)
+        if (out_cp >= 0xD800 && out_cp <= 0xDFFF)
             return __UINT32_MAX__;
 
         return 3;

@@ -154,13 +154,13 @@ u16 convert_gen_3_char_to_utf16(const u16 *charset, const u8 input);
  * 
  * We don't support surrogate pairs, so the output char will always be <= 3 bytes long.
  */
-u32 convert_utf16_to_utf8_char(u16 ch, u8* out);
+u32 convert_utf16_to_utf8_char(u16 ch, u8 *out);
 
 /**
  * @brief This function converts an UTF-8 char to an UTF-16 char.
  * 
  * We don't support surrogate pairs though. So the output will always be just 2 bytes.
  */
-u32 convert_utf8_to_utf16_char(const u8* utf8Char, u16& outUtf16Char);
+u32 convert_utf8_to_utf16_char(const u8 *utf8Char, u16 &outUtf16Char);
 
 #endif
