@@ -554,12 +554,12 @@ void Gen3SaveManager::setPokemonSeen(u16 speciesIndex, bool seen)
     setBitFlag(saveReader_, saveMetadata_, 4, seenFlagsBaseOffsetC, flagIndex, seen);
 }
 
-void Gen3SaveManager::readTrainerName(u8 *outputBuffer)
+void Gen3SaveManager::readTrainerName(u8 *outputBuffer, u32 &outNameLength)
 {
-    const u8 OTLength = (gameLanguage_ != JAPANESE) ? 7 : 5;
+    outNameLength = (gameLanguage_ != JAPANESE) ? 7 : 5;
     // trainer name is stored in the first section of the save file, starting at offset 0x0
     seekToSectionOffset(saveReader_, saveMetadata_, 0, 0);
-    saveReader_.read(outputBuffer, OTLength); // trainer name length depends on language
+    saveReader_.read(outputBuffer, outNameLength);
 }
 
 void Gen3SaveManager::finishSave()

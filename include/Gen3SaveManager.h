@@ -42,7 +42,7 @@ public:
      * @brief This function reads the trainer name from the save file in the gen3 text encoding.
      * The output buffer should be at least 7 bytes long to hold the trainer name.
      */
-    void readTrainerName(u8 *outputBuffer);
+    void readTrainerName(u8 *outputBuffer, u32 &outNameLength);
 
     void finishSave();
 protected:
