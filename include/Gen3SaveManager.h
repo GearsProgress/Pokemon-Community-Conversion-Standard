@@ -22,7 +22,7 @@ class IGen3SaveFileReader;
 class Gen3SaveManager
 {
 public:
-    Gen3SaveManager(Game gameType, IGen3SaveFileReader &saveReader);
+    Gen3SaveManager(Game gameType, Language gameLanguage, IGen3SaveFileReader &saveReader);
     ~Gen3SaveManager();
 
     u32 getCurrentBoxIndex() const;
@@ -48,6 +48,7 @@ public:
 protected:
 private:
     Game gameType_;
+    Language gameLanguage_;
     Gen3SaveMetadata saveMetadata_;
     IGen3SaveFileReader& saveReader_;
 };

@@ -171,6 +171,7 @@ void PCCSUtils::extractLehmerCode4(u32 n, u8 out[4])
 
 Game PCCSUtils::determineGameType(const char* param)
 {
+#if !ON_GBA
     if(strcasecmp(param, "ruby") == 0)
     {
         return RUBY;
@@ -191,5 +192,41 @@ Game PCCSUtils::determineGameType(const char* param)
     {
         return LEAFGREEN;
     }
-    return INVALID;
+#endif
+    return GAME_UNKNOWN;
+}
+
+Language determineLanguage(const char* param)
+{
+#if !ON_GBA
+    if(strcasecmp(param, "english") == 0)
+    {
+        return ENGLISH;
+    }
+    else if(strcasecmp(param, "japanese") == 0)
+    {
+        return JAPANESE;
+    }
+    else if(strcasecmp(param, "french") == 0)
+    {
+        return FRENCH;
+    }
+    else if(strcasecmp(param, "italian") == 0)
+    {
+        return ITALIAN;
+    }
+    else if(strcasecmp(param, "german") == 0)
+    {
+        return GERMAN;
+    }
+    else if(strcasecmp(param, "spanish") == 0)
+    {
+        return SPANISH;
+    }
+    else if(strcasecmp(param, "korean") == 0)
+    {
+        return KOREAN;
+    }
+#endif
+    return LANGUAGE_UNKNOWN;
 }

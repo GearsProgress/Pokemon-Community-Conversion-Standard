@@ -422,7 +422,7 @@ enum PokeBall
 
 enum Game
 {
-    INVALID = 0,
+    GAME_UNKNOWN = 0,
     SAPPHIRE = 1,
     RUBY,
     EMERALD,
@@ -656,7 +656,8 @@ enum Substructure
 
 enum Language
 {
-    JAPANESE = 1,
+    LANGUAGE_UNKNOWN = 0,
+    JAPANESE,
     ENGLISH,
     FRENCH,
     ITALIAN,

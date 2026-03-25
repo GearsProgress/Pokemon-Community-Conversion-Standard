@@ -32,7 +32,7 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
         fwrite(zeros, 1, sizeof(zeros), savFile);
         fseek(savFile, 0, SEEK_SET);
 
-        Gen3SaveManager saveManager(EMERALD, saveReader);
+        Gen3SaveManager saveManager(EMERALD, LANGUAGE_UNKNOWN, saveReader);
 
         saveManager.addPokemonToBox(1, bulbasaur);
         saveManager.finishSave();
@@ -56,7 +56,7 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
         fseek(savFile, 0, SEEK_SET);
 
         Gen3SaveFileReader saveReader(savFile);
-        Gen3SaveManager saveManager(EMERALD, saveReader);
+        Gen3SaveManager saveManager(EMERALD, LANGUAGE_UNKNOWN, saveReader);
 
         u32 section6Offset = 6 * 4096; // each section is 4096 bytes
         u32 boxOffsetInSection = 836;
@@ -93,7 +93,7 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection][dex]")
     fseek(savFile, 0, SEEK_SET);
 
     Gen3SaveFileReader saveReader(savFile);
-    Gen3SaveManager saveManager(EMERALD, saveReader);
+    Gen3SaveManager saveManager(EMERALD, LANGUAGE_UNKNOWN, saveReader);
 
     saveManager.addPokemonToBox(1, bulbasaur);
     saveManager.finishSave();
@@ -151,7 +151,7 @@ TEST_CASE("Gen3 Pokemon box deletion test", "[unit][gen3][deletion][box]")
     fwrite(g3_bulbasaur_data, 1, sizeof(comparisonBuffer), savFile);
 
     Gen3SaveFileReader saveReader(savFile);
-    Gen3SaveManager saveManager(EMERALD, saveReader);
+    Gen3SaveManager saveManager(EMERALD, LANGUAGE_UNKNOWN, saveReader);
     saveManager.removePokemonAtBoxIndex(2, 1);
     saveManager.finishSave();
 

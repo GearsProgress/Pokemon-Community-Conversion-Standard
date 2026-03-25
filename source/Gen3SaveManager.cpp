@@ -347,8 +347,9 @@ static void indexSave(IGen3SaveFileReader& saveReader, Gen3SaveMetadata& saveMet
     saveReader.readUint32(saveMetadata.currentPcBoxIndex_, Endianness::LITTLE);
 }
 
-Gen3SaveManager::Gen3SaveManager(Game gameType, IGen3SaveFileReader &saveReader)
+Gen3SaveManager::Gen3SaveManager(Game gameType, Language gameLanguage, IGen3SaveFileReader &saveReader)
     : gameType_(gameType)
+    , gameLanguage_(gameLanguage)
     , saveMetadata_()
     , saveReader_(saveReader)
 {
@@ -555,9 +556,10 @@ void Gen3SaveManager::setPokemonSeen(u16 speciesIndex, bool seen)
 
 void Gen3SaveManager::readTrainerName(u8 *outputBuffer)
 {
+    const u8 OTLength = (gameLanguage_ != JAPANESE) ? 7 : 5;
     // trainer name is stored in the first section of the save file, starting at offset 0x0
     seekToSectionOffset(saveReader_, saveMetadata_, 0, 0);
-    saveReader_.read(outputBuffer, 7); // trainer name is 7 bytes long
+    saveReader_.read(outputBuffer, OTLength); // trainer name length depends on language
 }
 
 void Gen3SaveManager::finishSave()

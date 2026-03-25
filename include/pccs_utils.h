@@ -164,6 +164,12 @@ void extractLehmerCode4(u32 n, u8 out[4]);
  */
 Game determineGameType(const char* param);
 
+/**
+ * @brief Determine a language based on a string parameter. The comparison is case-insensitive.
+ * This is useful for cmdline tools.
+ */
+Language determineLanguage(const char* param);
+
 }
 
 #endif

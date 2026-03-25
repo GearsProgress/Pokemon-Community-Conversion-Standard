@@ -32,14 +32,14 @@ int main(int argc, char **argv)
     }
 
     const Game game = PCCSUtils::determineGameType(argv[2]);
-    if(game == INVALID)
+    if(game == GAME_UNKNOWN)
     {
         printf("Invalid game type provided. Valid options are: ruby, sapphire, emerald, firered, leafgreen\n");
         return EXIT_FAILURE;
     }
 
     Gen3SaveFileReader saveFileReader(savFile);
-    Gen3SaveManager saveManager(game, saveFileReader);
+    Gen3SaveManager saveManager(game, LANGUAGE_UNKNOWN, saveFileReader);
     const bool isNationalDexUnlocked = saveManager.isNationalDexUnlocked();
 
     fclose(savFile);
