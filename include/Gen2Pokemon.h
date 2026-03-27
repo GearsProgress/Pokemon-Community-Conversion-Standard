@@ -27,7 +27,7 @@ public:
     bool setCaughtDataLevel(byte newVal) { return setVar(g2_caughtDataLevel, newVal); }
     bool setCaughtDataGender(byte newVal) { return setVar(g2_caughtDataGender, newVal); }
     bool setCaughtDataLocation(byte newVal) { return setVar(g2_caughtDataLocation, newVal); }
-    bool setCurrentHP(u32 newVal) { return setVar(g2_currentHP, newVal); }
+    bool setCurrentHP(byte newVal) { return setVar(g2_currentHP, newVal); }
 
 protected:
     static const DataVarInfo
