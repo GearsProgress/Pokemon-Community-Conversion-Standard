@@ -16,6 +16,19 @@
 #define MONS_PER_BOX 30
 #define SINGLE_MON_BYTES_IN_BOX 80
 
+extern "C"
+{
+#if ON_GBA
+extern void ptgb_mgba_print(int level, const char *format_str, ...);
+#else
+void ptgb_mgba_print(int level, const char *format_str, ...)
+{
+    (void)level;
+    (void)format_str;
+}
+#endif
+}
+
 static const u16 ownedFlagsBaseOffset = 0x0028;
 
 static void seekToSectionOffset(IGen3SaveFileReader& saveReader, const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 offsetWithinSection)
@@ -69,7 +82,7 @@ static bool validateSectionChecksum(IGen3SaveFileReader& saveReader, u8 sectionI
     saveReader.readUint16(stored_checksum, Endianness::LITTLE);
     
     // return to the start of the section
-    const long rewindAmount = -static_cast<long>(SECTION_CHECKSUM_OFFSET + sizeof(u16));
+    const u32 rewindAmount = SECTION_CHECKSUM_OFFSET + sizeof(u16);
     saveReader.rewind(rewindAmount);
 
     calculated_checksum = calculateSectionChecksum(saveReader, sectionId);
@@ -336,6 +349,7 @@ static void indexSave(IGen3SaveFileReader& saveReader, Gen3SaveMetadata& saveMet
     for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
     {
         saveMetadata.sectionMap_[sectionId] = saveMetadata.currentSaveOffset_ + (i * SECTION_SIZE);
+        //ptgb_mgba_print(3, "Section %hu: 0x%X\n", sectionId, saveMetadata.sectionMap_[sectionId]);
         sectionId = (sectionId + 1) % NUM_SAVE_SECTIONS;
     }
     
