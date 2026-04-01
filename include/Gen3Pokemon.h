@@ -278,13 +278,13 @@ public:
 
     void updateSecurityData();
 
-    byte getUnownLetter();
+    byte getUnownLetter() override;
     Nature getNature();
     Gender getGender();
     int getAbilityFromPersonalityValue();
     int getSize();
 
-    bool getIsShiny();
+    bool getIsShiny() override;
 
     bool setNicknameArray(byte nameArr[], int nameArrSize);
     bool setOTArray(byte nameArr[], int nameArrSize);
