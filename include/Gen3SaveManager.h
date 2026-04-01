@@ -76,12 +76,12 @@ public:
 protected:
 private:
     void seekToSectionOffset(const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 offsetWithinSection) const;
-    u16 calculateSectionChecksum(u8 sectionId);
+    u16 calculateSectionChecksum();
     /** 
     * Validates the current section checksum.
     * Note: the caller needs to seek to the start of the section.
     */
-    bool validateSectionChecksum(u8 sectionId);
+    bool validateSectionChecksum();
     void updateSectionChecksum(const Gen3SaveMetadata& saveMetadata, u8 sectionId);
     void getNationalDexUnlockFieldOffsets(Game game, u32& offsetFieldA, u32& offsetFieldB, u32& offsetFieldC) const;
     void getSeenFlagOffsetsForGame(Game game, u32& offsetFieldA, u32& offsetFieldB, u32& offsetFieldC) const;
