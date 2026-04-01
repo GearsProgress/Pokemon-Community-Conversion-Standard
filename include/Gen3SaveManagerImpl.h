@@ -2,18 +2,18 @@
 
 #include <cstring>
 
-#define SAVE_A_OFFSET       0 // Offset of Game Save A
-#define SAVE_B_OFFSET       0xE000 // Offset of Game Save B
-#define SECTION_ID_OFFSET   0x0FF4
-#define SECTION_CHECKSUM_OFFSET 0x0FF6
-#define SECTION_SIZE         0x1000
-#define SAVE_INDEX_OFFSET   0x0FFC
-#define FIRST_BOX_SECTION_ID 5
-#define NUM_BOX_SECTIONS 9
-#define BOX_BYTES_PER_SECTION 3968
-#define MONS_PER_BOX 30
-#define SINGLE_MON_BYTES_IN_BOX 80
-#define OWNEDFLAGS_BASE_OFFSET 0x0028
+#define PCCS_SAVE_A_OFFSET       0 // Offset of Game Save A
+#define PCCS_SAVE_B_OFFSET       0xE000 // Offset of Game Save B
+#define PCCS_SECTION_ID_OFFSET   0x0FF4
+#define PCCS_SECTION_CHECKSUM_OFFSET 0x0FF6
+#define PCCS_SECTION_SIZE         0x1000
+#define PCCS_SAVE_INDEX_OFFSET   0x0FFC
+#define PCCS_FIRST_BOX_SECTION_ID 5
+#define PCCS_NUM_BOX_SECTIONS 9
+#define PCCS_BOX_BYTES_PER_SECTION 3968
+#define PCCS_MONS_PER_BOX 30
+#define PCCS_SINGLE_MON_BYTES_IN_BOX 80
+#define PCCS_OWNEDFLAGS_BASE_OFFSET 0x0028
 
 extern "C"
 {
@@ -64,11 +64,11 @@ u32 Gen3SaveManager<Gen3SaveFileReaderType>::addPokemonToBox(int boxIndex, Gen3P
     pokemon.encryptSubstructures();
 
     // seek to the start of the box
-    const u32 boxStartOffset = boxIndex * (MONS_PER_BOX * SINGLE_MON_BYTES_IN_BOX);
+    const u32 boxStartOffset = boxIndex * (PCCS_MONS_PER_BOX * PCCS_SINGLE_MON_BYTES_IN_BOX);
     boxBufferManager.seek(boxStartOffset);
     
     // find an empty slot in the box by looking for a pokemon with personality value of 0.
-    for(unsigned i=0; i < MONS_PER_BOX; ++i)
+    for(unsigned i=0; i < PCCS_MONS_PER_BOX; ++i)
     {
         // TODO: readUint32FromFile() needs a file seek first
         boxBufferManager.readUint32(personalityValue, Endianness::LITTLE);
@@ -76,7 +76,7 @@ u32 Gen3SaveManager<Gen3SaveFileReaderType>::addPokemonToBox(int boxIndex, Gen3P
 
         if(personalityValue == 0) // this slot is empty, we can write our pokemon here
         {
-            boxBufferManager.write(pokemon.dataArrayPtr, SINGLE_MON_BYTES_IN_BOX); // write the pokemon data to the box
+            boxBufferManager.write(pokemon.dataArrayPtr, PCCS_SINGLE_MON_BYTES_IN_BOX); // write the pokemon data to the box
             setPokemonOwned(speciesIndex, true);
             setPokemonSeen(speciesIndex, true);
             return i; // return the index within the box where we added the pokemon
@@ -84,7 +84,7 @@ u32 Gen3SaveManager<Gen3SaveFileReaderType>::addPokemonToBox(int boxIndex, Gen3P
         // note that the readUint32FromFile() call did not advance the internal offset
         // of boxBufferManager. So we can just seek immediately to the next pokemon slot
         // by advancing the offset by the size of a pokemon. 
-        boxBufferManager.advance(SINGLE_MON_BYTES_IN_BOX);
+        boxBufferManager.advance(PCCS_SINGLE_MON_BYTES_IN_BOX);
     }
     return UINT32_MAX;
 }
@@ -93,14 +93,14 @@ template <typename Gen3SaveFileReaderType>
 bool Gen3SaveManager<Gen3SaveFileReaderType>::removePokemonAtBoxIndex(int boxIndex, unsigned pokemonIndex)
 {
     Gen3BoxBufferManager<Gen3SaveFileReaderType> boxBufferManager(saveMetadata_, saveReader_);
-    u8 emptyData[SINGLE_MON_BYTES_IN_BOX];
+    u8 emptyData[PCCS_SINGLE_MON_BYTES_IN_BOX];
     u32 personalityValue;
 
     memset(emptyData, 0, sizeof(emptyData));
 
      // seek to the start of the pokemon slot we want to remove
-    const u32 boxStartOffset = boxIndex * (MONS_PER_BOX * SINGLE_MON_BYTES_IN_BOX);
-    const u32 offsetWithinBox = pokemonIndex * SINGLE_MON_BYTES_IN_BOX;
+    const u32 boxStartOffset = boxIndex * (PCCS_MONS_PER_BOX * PCCS_SINGLE_MON_BYTES_IN_BOX);
+    const u32 offsetWithinBox = pokemonIndex * PCCS_SINGLE_MON_BYTES_IN_BOX;
     boxBufferManager.seek(boxStartOffset + offsetWithinBox);
 
     boxBufferManager.readUint32(personalityValue, Endianness::LITTLE);
@@ -111,7 +111,7 @@ bool Gen3SaveManager<Gen3SaveFileReaderType>::removePokemonAtBoxIndex(int boxInd
     }
 
     // overwrite the pokemon data with empty data to "remove" it from the box
-    boxBufferManager.write(emptyData, SINGLE_MON_BYTES_IN_BOX); 
+    boxBufferManager.write(emptyData, PCCS_SINGLE_MON_BYTES_IN_BOX); 
 
     return true;
 }
@@ -212,7 +212,7 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::setNationalDexUnlocked(bool should
 template <typename Gen3SaveFileReaderType>
 bool Gen3SaveManager<Gen3SaveFileReaderType>::isPokemonOwned(u16 speciesIndex) const
 {
-    return getBitFlag(saveMetadata_, 0, OWNEDFLAGS_BASE_OFFSET, speciesIndex - 1);
+    return getBitFlag(saveMetadata_, 0, PCCS_OWNEDFLAGS_BASE_OFFSET, speciesIndex - 1);
 }
 
 template <typename Gen3SaveFileReaderType>
@@ -229,7 +229,7 @@ bool Gen3SaveManager<Gen3SaveFileReaderType>::isPokemonSeen(u16 speciesIndex) co
 template <typename Gen3SaveFileReaderType>
 void Gen3SaveManager<Gen3SaveFileReaderType>::setPokemonOwned(u16 speciesIndex, bool owned)
 {
-    setBitFlag(saveMetadata_, 0, OWNEDFLAGS_BASE_OFFSET, speciesIndex - 1, owned);
+    setBitFlag(saveMetadata_, 0, PCCS_OWNEDFLAGS_BASE_OFFSET, speciesIndex - 1, owned);
 }
 
 template <typename Gen3SaveFileReaderType>
@@ -257,7 +257,7 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::readTrainerName(u8 *outputBuffer, 
 template <typename Gen3SaveFileReaderType>
 void Gen3SaveManager<Gen3SaveFileReaderType>::finishSave()
 {
-    for(unsigned i = 0; i < NUM_BOX_SECTIONS; ++i)
+    for(unsigned i = 0; i < PCCS_NUM_BOX_SECTIONS; ++i)
     {
         if(saveMetadata_.sectionModified_[i])
         {
@@ -314,11 +314,11 @@ bool Gen3SaveManager<Gen3SaveFileReaderType>::validateSectionChecksum(u8 section
 {
     u16 stored_checksum, calculated_checksum;
 
-    saveReader_.seek(SECTION_CHECKSUM_OFFSET);
+    saveReader_.seek(PCCS_SECTION_CHECKSUM_OFFSET);
     saveReader_.readUint16(stored_checksum, Endianness::LITTLE);
     
     // return to the start of the section
-    const u32 rewindAmount = SECTION_CHECKSUM_OFFSET + sizeof(u16);
+    const u32 rewindAmount = PCCS_SECTION_CHECKSUM_OFFSET + sizeof(u16);
     saveReader_.rewind(rewindAmount);
 
     calculated_checksum = calculateSectionChecksum(sectionId);
@@ -331,7 +331,7 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::updateSectionChecksum(const Gen3Sa
     seekToSectionOffset(saveMetadata, sectionId, 0);
     u16 new_checksum = calculateSectionChecksum(sectionId);
 
-    seekToSectionOffset(saveMetadata, sectionId, SECTION_CHECKSUM_OFFSET);
+    seekToSectionOffset(saveMetadata, sectionId, PCCS_SECTION_CHECKSUM_OFFSET);
     saveReader_.writeUint16(new_checksum, Endianness::LITTLE);
 }
 
@@ -436,26 +436,26 @@ u32 Gen3SaveManager<Gen3SaveFileReaderType>::pickSaveSlot()
     
     // deal with empty/corrupted slots by validating the checksum of the first section.
     saveAValid = validateSectionChecksum(0);
-    saveReader_.seek(SAVE_B_OFFSET);
+    saveReader_.seek(PCCS_SAVE_B_OFFSET);
     saveBValid = validateSectionChecksum(0);
 
     if(!saveAValid)
     {
-        return SAVE_B_OFFSET;
+        return PCCS_SAVE_B_OFFSET;
     }
     else if(!saveBValid)
     {
-        return SAVE_A_OFFSET;
+        return PCCS_SAVE_A_OFFSET;
     }
 
     // both are valid.
     // establish currentSaveoffset by comparing the save counts of both save slots
-    saveReader_.seek(SAVE_A_OFFSET + SAVE_INDEX_OFFSET);
+    saveReader_.seek(PCCS_SAVE_A_OFFSET + PCCS_SAVE_INDEX_OFFSET);
     saveReader_.readUint32(saveCountA, Endianness::LITTLE);
-    saveReader_.seek(SAVE_B_OFFSET + SAVE_INDEX_OFFSET);
+    saveReader_.seek(PCCS_SAVE_B_OFFSET + PCCS_SAVE_INDEX_OFFSET);
     saveReader_.readUint32(saveCountB, Endianness::LITTLE);
 
-    return (saveCountA >= saveCountB) ? SAVE_A_OFFSET : SAVE_B_OFFSET;
+    return (saveCountA >= saveCountB) ? PCCS_SAVE_A_OFFSET : PCCS_SAVE_B_OFFSET;
 }
 
 template <typename Gen3SaveFileReaderType>
@@ -469,11 +469,11 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::indexSave(Gen3SaveMetadata& saveMe
     // The sections within the save slot are rotated on every save. So the save doesn't 
     // start at the first section. However, the next sections do follow sequentially.
     // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#Section_ID
-    saveReader_.seek(saveMetadata.currentSaveOffset_ + SECTION_ID_OFFSET);
+    saveReader_.seek(saveMetadata.currentSaveOffset_ + PCCS_SECTION_ID_OFFSET);
     saveReader_.readUint16(sectionId, Endianness::LITTLE);
     for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
     {
-        saveMetadata.sectionMap_[sectionId] = saveMetadata.currentSaveOffset_ + (i * SECTION_SIZE);
+        saveMetadata.sectionMap_[sectionId] = saveMetadata.currentSaveOffset_ + (i * PCCS_SECTION_SIZE);
         //ptgb_mgba_print(3, "Section %hu: 0x%X\n", sectionId, saveMetadata.sectionMap_[sectionId]);
         sectionId = (sectionId + 1) % NUM_SAVE_SECTIONS;
     }
@@ -482,7 +482,7 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::indexSave(Gen3SaveMetadata& saveMe
     memset(saveMetadata.sectionModified_, 0, sizeof(saveMetadata.sectionModified_));
 
     // now establish the current PC box index
-    seekToSectionOffset(saveMetadata, FIRST_BOX_SECTION_ID, 0);
+    seekToSectionOffset(saveMetadata, PCCS_FIRST_BOX_SECTION_ID, 0);
     saveReader_.readUint32(saveMetadata.currentPcBoxIndex_, Endianness::LITTLE);
 }
 
@@ -502,7 +502,7 @@ void Gen3BoxBufferManager<Gen3SaveFileReaderType>::seek(u32 offset_in_box_buffer
     curOffset_ = curBoxFieldSize + offset_in_box_buffer;
 
     const u16 sectionId = convertOffsetToSectionId(curOffset_);
-    u32 offsetWithinSection = curOffset_ % BOX_BYTES_PER_SECTION;
+    u32 offsetWithinSection = curOffset_ % PCCS_BOX_BYTES_PER_SECTION;
     saveReader_.seek(saveMetadata_.sectionMap_[sectionId] + offsetWithinSection);
 }
 
@@ -532,10 +532,10 @@ template <typename Gen3SaveFileReaderType>
 void Gen3BoxBufferManager<Gen3SaveFileReaderType>::read(u8* outBuffer, u32 numBytes)
 {
     const u16 sectionId = convertOffsetToSectionId(curOffset_);
-    u32 offsetWithinSection = curOffset_ % BOX_BYTES_PER_SECTION;
+    u32 offsetWithinSection = curOffset_ % PCCS_BOX_BYTES_PER_SECTION;
     saveReader_.seek(saveMetadata_.sectionMap_[sectionId] + offsetWithinSection);
 
-    u32 bytesToRead = (numBytes > (BOX_BYTES_PER_SECTION - offsetWithinSection)) ? (BOX_BYTES_PER_SECTION - offsetWithinSection) : numBytes;
+    u32 bytesToRead = (numBytes > (PCCS_BOX_BYTES_PER_SECTION - offsetWithinSection)) ? (PCCS_BOX_BYTES_PER_SECTION - offsetWithinSection) : numBytes;
     saveReader_.read(outBuffer, bytesToRead);
     curOffset_ += bytesToRead;
     numBytes -= bytesToRead;
@@ -554,10 +554,10 @@ template <typename Gen3SaveFileReaderType>
 void Gen3BoxBufferManager<Gen3SaveFileReaderType>::write(const u8* inBuffer, u32 numBytes)
 {
     const u16 sectionId = convertOffsetToSectionId(curOffset_);
-    u32 offsetWithinSection = curOffset_ % BOX_BYTES_PER_SECTION;
+    u32 offsetWithinSection = curOffset_ % PCCS_BOX_BYTES_PER_SECTION;
     saveReader_.seek(saveMetadata_.sectionMap_[sectionId] + offsetWithinSection);
 
-    u32 bytesToWrite = (numBytes > (BOX_BYTES_PER_SECTION - offsetWithinSection)) ? (BOX_BYTES_PER_SECTION - offsetWithinSection) : numBytes;
+    u32 bytesToWrite = (numBytes > (PCCS_BOX_BYTES_PER_SECTION - offsetWithinSection)) ? (PCCS_BOX_BYTES_PER_SECTION - offsetWithinSection) : numBytes;
     saveReader_.write(inBuffer, bytesToWrite);
     curOffset_ += bytesToWrite;
     numBytes -= bytesToWrite;
@@ -578,6 +578,6 @@ template <typename Gen3SaveFileReaderType>
 u16 Gen3BoxBufferManager<Gen3SaveFileReaderType>::convertOffsetToSectionId(u32 offset) const
 {
     // we know that the first box section starts at section id 5, 
-    // and that each section can store BOX_BYTES_PER_SECTION bytes (except for the last one)
-    return (offset / BOX_BYTES_PER_SECTION) + FIRST_BOX_SECTION_ID;
+    // and that each section can store PCCS_BOX_BYTES_PER_SECTION bytes (except for the last one)
+    return (offset / PCCS_BOX_BYTES_PER_SECTION) + PCCS_FIRST_BOX_SECTION_ID;
 }

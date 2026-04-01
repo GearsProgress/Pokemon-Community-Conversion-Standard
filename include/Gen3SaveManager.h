@@ -14,7 +14,6 @@ typedef struct Gen3SaveMetadata
 } Gen3SaveMetadata;
 
 class Gen3Pokemon;
-class IGen3SaveFileReader;
 
 /**
  * @brief This class allows you to manage a gen3 save file.

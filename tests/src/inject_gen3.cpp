@@ -67,7 +67,7 @@ TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
         saveManager.addPokemonToBox(2, bulbasaur);
         saveManager.finishSave();
 
-        fseek(savFile, section6Offset + boxOffsetInSection + SINGLE_MON_BYTES_IN_BOX, SEEK_SET);
+        fseek(savFile, section6Offset + boxOffsetInSection + PCCS_SINGLE_MON_BYTES_IN_BOX, SEEK_SET);
         size_t bytesRead = fread(comparisonBuffer, 1, sizeof(comparisonBuffer), savFile);
         REQUIRE(bytesRead > 0);
         REQUIRE(memcmp(comparisonBuffer, g3_bulbasaur_data, sizeof(comparisonBuffer)) == 0);
@@ -144,7 +144,7 @@ TEST_CASE("Gen3 Pokemon box deletion test", "[unit][gen3][deletion][box]")
     u32 boxOffsetInSection = 836;
     fseek(savFile, section6Offset + boxOffsetInSection, SEEK_SET);
     // skip the first box slot
-    fseek(savFile, SINGLE_MON_BYTES_IN_BOX, SEEK_CUR);
+    fseek(savFile, PCCS_SINGLE_MON_BYTES_IN_BOX, SEEK_CUR);
 
     fwrite(g3_bulbasaur_data, 1, sizeof(comparisonBuffer), savFile);
 
@@ -154,7 +154,7 @@ TEST_CASE("Gen3 Pokemon box deletion test", "[unit][gen3][deletion][box]")
     saveManager.finishSave();
 
     // now validate
-    fseek(savFile, section6Offset + boxOffsetInSection + SINGLE_MON_BYTES_IN_BOX, SEEK_SET);
+    fseek(savFile, section6Offset + boxOffsetInSection + PCCS_SINGLE_MON_BYTES_IN_BOX, SEEK_SET);
     fread(comparisonBuffer, 1, sizeof(comparisonBuffer), savFile);
 
     REQUIRE(memcmp(comparisonBuffer, zeros, sizeof(comparisonBuffer)) == 0);
