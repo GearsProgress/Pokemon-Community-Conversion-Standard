@@ -1,23 +1,20 @@
 # Source files directory
-SRC_DIR := src
+SRC_DIR := $(CURDIR)
 
-# Include files directory
-INC_DIR := include
-
-PCCS_INC_DIR := $(CURDIR)/../include
+PCCS_INC_DIR := $(CURDIR)/../../include
 
 # Build directory
 BUILD_DIR := build
 
 # # Compiler flags
-CXXFLAGS := -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -I $(CURDIR) -I $(PCCS_INC_DIR) -I $(INC_DIR) -g -O0
+CXXFLAGS := -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable -I $(CURDIR) -I $(PCCS_INC_DIR) -g -Os
 
 # Source files (add more as needed)
 SRCS := $(shell find $(SRC_DIR) -type f -name '*.cpp')
 # Object files
 OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
-LIBPCCS := ../lib/libpccs.a
+LIBPCCS := ../../lib/libpccs.a
 
 # Ensure necessary directories exist
 # This function ensures the directory for the target exists
@@ -26,7 +23,7 @@ define make_directory
 endef
 
 # Target executable
-TARGET := pccs_test
+TARGET := injectGen3IntoBox
 
 # Phony targets
 .PHONY: all clean

@@ -693,7 +693,9 @@ void load_localized_charset(u16 *output_char_array, byte gen, Language lang)
 {
     u8 generation_charsets[2048];
     const u8 *input_data;
+#if !ON_GBA
     size_t input_size;
+#endif
 
     // in the localization_charset_indices list,
     // gen 1 starts first and every gen has 7 entries (1 per language)
@@ -757,4 +759,68 @@ byte get_char_from_charset(const u16 *charset, u16 input_char)
         ++i;
     }
     return 0;
+}
+
+u16 convert_gen_3_char_to_utf16(const u16 *charset, const u8 input)
+{
+    switch(input)
+    {
+        case 0xFF: // end of string character
+            return 0;
+        case 0xFE: // newline character
+            return 0x0A;
+        default:
+            return charset[input];
+    }
+}
+
+u32 convert_utf16_to_utf8_char(u16 ch, u8 *out)
+{
+    if (ch < 0x80)
+    {
+        out[0] = (uint8_t)ch;
+        return 1;
+    }
+    else if (ch < 0x800)
+    {
+        out[0] = (uint8_t)((ch >> 6) | 0xC0);
+        out[1] = (uint8_t)((ch & 0x3F) | 0x80);
+        return 2;
+    }
+    else
+    {
+        // Since we excluded surrogates, everything else fits in 3 bytes
+        out[0] = (uint8_t)((ch >> 12) | 0xE0);
+        out[1] = (uint8_t)(((ch >> 6) & 0x3F) | 0x80);
+        out[2] = (uint8_t)((ch & 0x3F) | 0x80);
+        return 3;
+    }
+}
+
+u32 convert_utf8_to_utf16_char(const u8 *src, u16 &out_cp)
+{
+    if ((src[0] & 0x80) == 0)
+    {
+        out_cp = src[0];
+        return 1;
+    }
+    else if ((src[0] & 0xE0) == 0xC0)
+    {
+        out_cp = ((src[0] & 0x1F) << 6) |
+                       (src[1] & 0x3F);
+        return 2;
+    }
+    else if ((src[0] & 0xF0) == 0xE0)
+    {
+        out_cp = ((src[0] & 0x0F) << 12) |
+                       ((src[1] & 0x3F) << 6) |
+                       (src[2] & 0x3F);
+
+        // reject surrogate range
+        if (out_cp >= 0xD800 && out_cp <= 0xDFFF)
+            return __UINT32_MAX__;
+
+        return 3;
+    }
+    return __UINT32_MAX__;
 }
