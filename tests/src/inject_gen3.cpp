@@ -13,8 +13,6 @@ static const byte g3_bulbasaur_data[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x58, 0x05, 0xA2, 0x48, 0xF6, 0x05, 0x29, 0x00, 0x00, 0x00, 0x00
 };
 
-static const int SINGLE_MON_BYTES_IN_BOX = 80;
-
 TEST_CASE("Gen3 Pokémon injection test", "[unit][gen3][injection]")
 {
     const u8 zeros[128 * 1024] = {0};

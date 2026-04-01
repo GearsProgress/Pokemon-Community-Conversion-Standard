@@ -1,32 +1,32 @@
 #ifndef _GEN3SAVEFILEREADER_H_
 #define _GEN3SAVEFILEREADER_H_
 
-#include "IGen3SaveFileReader.h"
+#include "typeDefs.h"
 #include <cstdio>
 
 /**
- * @brief File-based implementation of IGen3SaveFileReader. 
+ * @brief File-based implementation of a save file reader that can be used by Gen3SaveManager. 
  * This is used for PCCS on platforms other than the GBA.
  */
-class Gen3SaveFileReader : public IGen3SaveFileReader
+class Gen3SaveFileReader
 {
 public:
     Gen3SaveFileReader(FILE* saveFile);
-    virtual ~Gen3SaveFileReader();
+    ~Gen3SaveFileReader();
 
-    void read(u8 *buffer, u32 size) override;
-    void readUint8(u8& outByte) override;
-    void readUint16(u16& outWord, Endianness fieldEndianness) override;
-    void readUint32(u32& outDWord, Endianness fieldEndianness) override;
+    void read(u8 *buffer, u32 size);
+    void readUint8(u8& outByte);
+    void readUint16(u16& outWord, Endianness fieldEndianness);
+    void readUint32(u32& outDWord, Endianness fieldEndianness);
 
-    void write(const u8 *buffer, u32 size) override;
-    void writeUint8(u8 value) override;
-    void writeUint16(u16 value, Endianness fieldEndianness) override;
-    void writeUint32(u32 value, Endianness fieldEndianness) override;
+    void write(const u8 *buffer, u32 size);
+    void writeUint8(u8 value);
+    void writeUint16(u16 value, Endianness fieldEndianness);
+    void writeUint32(u32 value, Endianness fieldEndianness);
 
-    void seek(u32 offset) override;
-    void advance(u32 numBytes) override;
-    void rewind(u32 numBytes) override;
+    void seek(u32 offset);
+    void advance(u32 numBytes);
+    void rewind(u32 numBytes);
 protected:
 private:
     FILE* saveFile_;
