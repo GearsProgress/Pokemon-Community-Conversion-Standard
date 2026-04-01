@@ -475,7 +475,11 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::indexSave(Gen3SaveMetadata& saveMe
     {
         saveMetadata.sectionMap_[sectionId] = saveMetadata.currentSaveOffset_ + (i * PCCS_SECTION_SIZE);
         //ptgb_mgba_print(3, "Section %hu: 0x%X\n", sectionId, saveMetadata.sectionMap_[sectionId]);
-        sectionId = (sectionId + 1) % NUM_SAVE_SECTIONS;
+        ++sectionId;
+        if(sectionId == NUM_SAVE_SECTIONS)
+        {
+            sectionId = 0;
+        }
     }
     
     // initialize all sections as unmodified
@@ -490,6 +494,7 @@ template <typename Gen3SaveFileReaderType>
 Gen3BoxBufferManager<Gen3SaveFileReaderType>::Gen3BoxBufferManager(Gen3SaveMetadata& saveMetadata, Gen3SaveFileReaderType& saveReader)
     : saveMetadata_(saveMetadata)
     , saveReader_(saveReader)
+    , curOffset_(0)
 {
 }
 
