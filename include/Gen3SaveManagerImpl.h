@@ -257,7 +257,7 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::readTrainerName(u8 *outputBuffer, 
 template <typename Gen3SaveFileReaderType>
 void Gen3SaveManager<Gen3SaveFileReaderType>::finishSave()
 {
-    for(unsigned i = 0; i < PCCS_NUM_BOX_SECTIONS; ++i)
+    for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
     {
         if(saveMetadata_.sectionModified_[i])
         {
@@ -273,27 +273,11 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::seekToSectionOffset(const Gen3Save
 }
 
 template <typename Gen3SaveFileReaderType>
-u16 Gen3SaveManager<Gen3SaveFileReaderType>::calculateSectionChecksum(u8 sectionId)
+u16 Gen3SaveManager<Gen3SaveFileReaderType>::calculateSectionChecksum()
 {
-    unsigned num_bytes_to_checksum;
+    const unsigned num_bytes_to_checksum = 3968;
     u32 checksum = 0;
     u32 cur;
-
-    switch(sectionId)
-    {
-    case 0:
-        num_bytes_to_checksum = 3884;
-        break;
-    case 4:
-        num_bytes_to_checksum = 3848;
-        break;
-    case 13:
-        num_bytes_to_checksum = 2000;
-        break;
-    default:
-        num_bytes_to_checksum = 3968;
-        break;
-    }
 
     // https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)#Checksum
     for(unsigned i = 0; i < num_bytes_to_checksum; i += sizeof(u32))
@@ -310,18 +294,18 @@ u16 Gen3SaveManager<Gen3SaveFileReaderType>::calculateSectionChecksum(u8 section
 }
 
 template <typename Gen3SaveFileReaderType>
-bool Gen3SaveManager<Gen3SaveFileReaderType>::validateSectionChecksum(u8 sectionId)
+bool Gen3SaveManager<Gen3SaveFileReaderType>::validateSectionChecksum()
 {
     u16 stored_checksum, calculated_checksum;
 
-    saveReader_.seek(PCCS_SECTION_CHECKSUM_OFFSET);
+    saveReader_.advance(PCCS_SECTION_CHECKSUM_OFFSET);
     saveReader_.readUint16(stored_checksum, Endianness::LITTLE);
     
     // return to the start of the section
     const u32 rewindAmount = PCCS_SECTION_CHECKSUM_OFFSET + sizeof(u16);
     saveReader_.rewind(rewindAmount);
 
-    calculated_checksum = calculateSectionChecksum(sectionId);
+    calculated_checksum = calculateSectionChecksum();
     return (stored_checksum == calculated_checksum);
 }
 
@@ -329,7 +313,7 @@ template <typename Gen3SaveFileReaderType>
 void Gen3SaveManager<Gen3SaveFileReaderType>::updateSectionChecksum(const Gen3SaveMetadata& saveMetadata, u8 sectionId)
 {
     seekToSectionOffset(saveMetadata, sectionId, 0);
-    u16 new_checksum = calculateSectionChecksum(sectionId);
+    u16 new_checksum = calculateSectionChecksum();
 
     seekToSectionOffset(saveMetadata, sectionId, PCCS_SECTION_CHECKSUM_OFFSET);
     saveReader_.writeUint16(new_checksum, Endianness::LITTLE);
@@ -435,16 +419,18 @@ u32 Gen3SaveManager<Gen3SaveFileReaderType>::pickSaveSlot()
     bool saveAValid, saveBValid;
     
     // deal with empty/corrupted slots by validating the checksum of the first section.
-    saveAValid = validateSectionChecksum(0);
+    saveAValid = validateSectionChecksum();
     saveReader_.seek(PCCS_SAVE_B_OFFSET);
-    saveBValid = validateSectionChecksum(0);
+    saveBValid = validateSectionChecksum();
 
     if(!saveAValid)
     {
+        ptgb_mgba_print(3, "Save slot A is invalid. Using save slot B.");
         return PCCS_SAVE_B_OFFSET;
     }
     else if(!saveBValid)
     {
+        ptgb_mgba_print(3, "Save slot B is invalid. Using save slot A.");
         return PCCS_SAVE_A_OFFSET;
     }
 
@@ -455,6 +441,7 @@ u32 Gen3SaveManager<Gen3SaveFileReaderType>::pickSaveSlot()
     saveReader_.seek(PCCS_SAVE_B_OFFSET + PCCS_SAVE_INDEX_OFFSET);
     saveReader_.readUint32(saveCountB, Endianness::LITTLE);
 
+    ptgb_mgba_print(3, "Save slot A and B are both valid. Save count A: %u, Save count B: %u. ", saveCountA, saveCountB);
     return (saveCountA >= saveCountB) ? PCCS_SAVE_A_OFFSET : PCCS_SAVE_B_OFFSET;
 }
 
@@ -474,7 +461,7 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::indexSave(Gen3SaveMetadata& saveMe
     for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
     {
         saveMetadata.sectionMap_[sectionId] = saveMetadata.currentSaveOffset_ + (i * PCCS_SECTION_SIZE);
-        //ptgb_mgba_print(3, "Section %hu: 0x%X\n", sectionId, saveMetadata.sectionMap_[sectionId]);
+        ptgb_mgba_print(3, "Section %hu: 0x%X\n", sectionId, saveMetadata.sectionMap_[sectionId]);
         ++sectionId;
         if(sectionId == NUM_SAVE_SECTIONS)
         {
