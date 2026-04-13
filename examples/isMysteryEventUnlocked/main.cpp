@@ -12,7 +12,7 @@
 
 static void print_usage()
 {
-    printf("Usage: unlockMysteryGift <save_file_path> <game_type> <game_language>\n");
+    printf("Usage: isMysteryEventUnlocked <save_file_path> <game_type> <game_language>\n");
 }
 
 int main(int argc, char **argv)
@@ -30,9 +30,9 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if(game == RUBY || game == SAPPHIRE)
+    if(game == FIRERED || game == LEAFGREEN)
     {
-        printf("The Mystery Gift feature is not available in Ruby and Sapphire. Check Mystery Event instead!\n");
+        printf("The Mystery Event feature is not available in Fire Red and Leaf Green. Check Mystery Gift instead!\n");
         return EXIT_SUCCESS;
     }
 
@@ -52,15 +52,11 @@ int main(int argc, char **argv)
 
     Gen3SaveFileReader saveFileReader(savFile);
     Gen3SaveManager saveManager(game, language, saveFileReader);
-
-    saveManager.setMysteryGiftUnlocked(true);
-    saveManager.finishSave();
-
-    const bool isMysteryGiftUnlocked = saveManager.isMysteryGiftUnlocked();
+    const bool isMysteryEventUnlocked = saveManager.isMysteryEventUnlocked();
 
     fclose(savFile);
 
-    printf("Unlock status: Mystery Gift: %s\n", BOOL_TO_STRING(isMysteryGiftUnlocked));
+    printf("Unlock status: Mystery Event: %s\n", BOOL_TO_STRING(isMysteryEventUnlocked));
 
     return EXIT_SUCCESS;
 }
