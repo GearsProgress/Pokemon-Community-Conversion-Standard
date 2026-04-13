@@ -57,9 +57,36 @@ public:
 
     u32 addPokemonToBox(int boxIndex, Gen3Pokemon& pokemon);
     bool removePokemonAtBoxIndex(int boxIndex, unsigned pokemonIndex);
-    
+
+    /**
+     * @brief This function checks whether the National Dex has been unlocked in the save file.
+     */
     bool isNationalDexUnlocked() const;
+    /**
+     * @brief This function unlocks the National Dex in the save file.
+     */
     void setNationalDexUnlocked(bool shouldBeUnlocked);
+
+    /**
+     * @brief This function checks whether the Mystery Event feature has been unlocked.
+     * Only relevant for R/S/E.
+     */
+    bool isMysteryEventUnlocked() const;
+
+    /**
+     * @brief This function unlocks the Mystery Event feature for R/S/E.
+     */
+    void setMysteryEventUnlocked(bool shouldBeUnlocked);
+
+    /**
+     * @brief This function checks whether the Mystery Gift feature has been unlocked. (relevant for FR/LG/E)
+     */
+    bool isMysteryGiftUnlocked() const;
+
+    /**
+     * @brief This function unlocks the Mystery Gift feature for FR/LG/E.
+     */
+    void setMysteryGiftUnlocked(bool shouldBeUnlocked);
 
     bool isPokemonOwned(u16 speciesIndex) const;
     bool isPokemonSeen(u16 speciesIndex) const;
@@ -85,7 +112,7 @@ private:
     void updateSectionChecksum(const Gen3SaveMetadata& saveMetadata, u8 sectionId);
     void getNationalDexUnlockFieldOffsets(Game game, u32& offsetFieldA, u32& offsetFieldB, u32& offsetFieldC) const;
     void getSeenFlagOffsetsForGame(Game game, u32& offsetFieldA, u32& offsetFieldB, u32& offsetFieldC) const;
-    bool getBitFlag(const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex);
+    bool getBitFlag(const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex) const;
     void setBitFlag(Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex, bool enabled);
 
     /**

@@ -6,6 +6,8 @@ all:
 	$(MAKE) -C injectGen3 $(MAKECMDGOALS) $(MAKEOVERRIDES)
 	$(MAKE) -C unlockNationalDex $(MAKECMDGOALS) $(MAKEOVERRIDES)
 	$(MAKE) -C isNationalDexUnlocked $(MAKECMDGOALS) $(MAKEOVERRIDES)
+	$(MAKE) -C unlockMysteryGift $(MAKECMDGOALS) $(MAKEOVERRIDES)
+	$(MAKE) -C isMysteryGiftUnlocked $(MAKECMDGOALS) $(MAKEOVERRIDES)
 	$(MAKE) -C scratch $(MAKECMDGOALS) $(MAKEOVERRIDES)
 
 clean:
@@ -13,4 +15,6 @@ clean:
 	$(MAKE) -C injectGen3 clean
 	$(MAKE) -C unlockNationalDex clean
 	$(MAKE) -C isNationalDexUnlocked clean
+	$(MAKE) -C unlockMysteryGift clean
+	$(MAKE) -C isMysteryGiftUnlocked clean
 	$(MAKE) -C scratch clean	

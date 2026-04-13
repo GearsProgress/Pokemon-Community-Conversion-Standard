@@ -8,14 +8,16 @@
 #include <cstdio>
 #include <cstdint>
 
+#define BOOL_TO_STRING(x) ((x) ? "Yes" : "No")
+
 static void print_usage()
 {
-    printf("Usage: isNationalDexUnlocked <save_file_path> <game_type>\n");
+    printf("Usage: isMysteryGiftUnlocked <save_file_path> <game_type> <game_language>\n");
 }
 
 int main(int argc, char **argv)
 {
-    if(argc != 3)
+    if(argc != 4)
     {
         print_usage();
         return EXIT_FAILURE;
@@ -35,20 +37,21 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    const Language language = PCCSUtils::determineLanguage(argv[3]);
+    if(language == LANGUAGE_UNKNOWN)
+    {
+        printf("Invalid game language provided. Valid options are: english, japanese, french, german, italian, spanish\n");
+        return EXIT_FAILURE;
+    }
+
     Gen3SaveFileReader saveFileReader(savFile);
-    Gen3SaveManager saveManager(game, LANGUAGE_UNKNOWN, saveFileReader);
-    const bool isNationalDexUnlocked = saveManager.isNationalDexUnlocked();
+    Gen3SaveManager saveManager(game, language, saveFileReader);
+    const bool isMysteryEventUnlocked = saveManager.isMysteryEventUnlocked();
+    const bool isMysteryGiftUnlocked = saveManager.isMysteryGiftUnlocked();
 
     fclose(savFile);
 
-    if(isNationalDexUnlocked)
-    {
-        printf("The national dex is unlocked in this save file!\n");
-    }
-    else
-    {
-        printf("The national dex is NOT unlocked in this save file.\n");
-    }
+    printf("Unlock status: Mystery Event: %s, Mystery Gift: %s\n", BOOL_TO_STRING(isMysteryEventUnlocked), BOOL_TO_STRING(isMysteryGiftUnlocked));
 
     return EXIT_SUCCESS;
 }

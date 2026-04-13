@@ -196,7 +196,7 @@ Game PCCSUtils::determineGameType(const char* param)
     return GAME_UNKNOWN;
 }
 
-Language determineLanguage(const char* param)
+Language PCCSUtils::determineLanguage(const char* param)
 {
 #if !ON_GBA
     if(strcasecmp(param, "english") == 0)
