@@ -7,17 +7,24 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstdint>
+#include <strings.h>
 
 #define BOOL_TO_STRING(x) ((x) ? "Yes" : "No")
 
+static bool is_truthy_string(const char* str)
+{
+    return strcasecmp(str, "true") == 0 || strcmp(str, "1") == 0;
+}
+
 static void print_usage()
 {
-    printf("Usage: unlockMysteryGift <save_file_path> <game_type> <game_language>\n");
+    printf("Usage: unlockMysteryGift <save_file_path> <game_type> <game_language> [shouldBeUnlocked]\n");
 }
 
 int main(int argc, char **argv)
 {
-    if(argc != 4)
+    bool shouldBeUnlocked = true;
+    if(argc < 4 || argc > 5)
     {
         print_usage();
         return EXIT_FAILURE;
@@ -43,6 +50,11 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    if(argc == 5 && !is_truthy_string(argv[4]))
+    {
+        shouldBeUnlocked = false;
+    }
+
     FILE *savFile = fopen(argv[1], "r+b");
     if(!savFile)
     {
@@ -53,7 +65,7 @@ int main(int argc, char **argv)
     Gen3SaveFileReader saveFileReader(savFile);
     Gen3SaveManager saveManager(game, language, saveFileReader);
 
-    saveManager.setMysteryGiftUnlocked(true);
+    saveManager.setMysteryGiftUnlocked(shouldBeUnlocked);
     saveManager.finishSave();
 
     const bool isMysteryGiftUnlocked = saveManager.isMysteryGiftUnlocked();
