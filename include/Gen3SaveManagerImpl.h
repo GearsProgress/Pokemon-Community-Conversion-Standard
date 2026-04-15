@@ -256,7 +256,6 @@ template <typename Gen3SaveFileReaderType>
 bool Gen3SaveManager<Gen3SaveFileReaderType>::isMysteryEventUnlocked() const
 {
     u32 flagOffset;
-    u8 flagValue;
     
     getMysteryEventFlagOffsetFor(gameType_, flagOffset);
 
@@ -272,7 +271,6 @@ template <typename Gen3SaveFileReaderType>
 void Gen3SaveManager<Gen3SaveFileReaderType>::setMysteryEventUnlocked(bool shouldBeUnlocked)
 {
     u32 flagOffset;
-    u8 flagValue;
     
     getMysteryEventFlagOffsetFor(gameType_, flagOffset);
     
