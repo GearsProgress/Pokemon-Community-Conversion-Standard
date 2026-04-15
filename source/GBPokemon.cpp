@@ -405,7 +405,7 @@ bool GBPokemon::convertTrainerNickname(Gen3Pokemon *newPkmn)
     pokeTable->load_input_charset(1, ENGLISH);
     pokeTable->load_gen3_charset(ENGLISH);
 
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 7; i++)
     {
         newPkmn->setOTLetter(i, pokeTable->get_gen_3_char(pokeTable->input_charset[OTArray[i]]));
     }
