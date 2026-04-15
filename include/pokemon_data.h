@@ -143,4 +143,24 @@ public:
 void load_localized_charset(u16 *output_char_array, byte gen, Language lang);
 byte get_char_from_charset(const u16 *charset, u16 input_char);
 
+/**
+ * @brief This function converts a gen 3 string to an UTF-16 string, using the provided charset. 
+ * The output array should be big enough to hold the resulting UTF-16 string.
+ */
+u16 convert_gen_3_char_to_utf16(const u16 *charset, const u8 input);
+
+/**
+ * @brief This function converts a utf-16 char to a an UTF-8 char.
+ * 
+ * We don't support surrogate pairs, so the output char will always be <= 3 bytes long.
+ */
+u32 convert_utf16_to_utf8_char(u16 ch, u8 *out);
+
+/**
+ * @brief This function converts an UTF-8 char to an UTF-16 char.
+ * 
+ * We don't support surrogate pairs though. So the output will always be just 2 bytes.
+ */
+u32 convert_utf8_to_utf16_char(const u8 *utf8Char, u16 &outUtf16Char);
+
 #endif

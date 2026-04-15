@@ -10,6 +10,16 @@ u32 Pokemon::getSpeciesIndexNumber()
     return 0;
 }
 
+byte Pokemon::getUnownLetter()
+{
+    return 0;
+}
+
+bool Pokemon::getIsShiny()
+{
+    return false;
+}
+
 u32 Pokemon::getVar(const DataVarInfo& dataVar)
 {
     return getVar(dataVar, 0);

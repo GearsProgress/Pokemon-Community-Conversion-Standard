@@ -106,10 +106,10 @@ public:
 
     // These aren't direct variables, but they're useful to have
     Language getLanguage() { return lang; };
-    byte getUnownLetter();
+    byte getUnownLetter() override;
     Gender getGender();
     Nature getVirtualConsoleNature();
-    bool getIsShiny();
+    bool getIsShiny() override;
     bool externalConvertNickname(byte outputArray[]);
 
     // And this is for all the conversion stuff

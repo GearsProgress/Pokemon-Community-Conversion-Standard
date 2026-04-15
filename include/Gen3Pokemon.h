@@ -10,6 +10,7 @@ class Gen3Pokemon : public Pokemon // The class for gen 3 Pokemon
 {
 public:
     Gen3Pokemon(PokemonTables *table);
+    Gen3Pokemon(const Gen3Pokemon &other);
 
     bool convertToGen3(Gen3Pokemon *g3p);
 
@@ -277,13 +278,13 @@ public:
 
     void updateSecurityData();
 
-    byte getUnownLetter();
+    byte getUnownLetter() override;
     Nature getNature();
     Gender getGender();
     int getAbilityFromPersonalityValue();
     int getSize();
 
-    bool getIsShiny();
+    bool getIsShiny() override;
 
     bool setNicknameArray(byte nameArr[], int nameArrSize);
     bool setOTArray(byte nameArr[], int nameArrSize);

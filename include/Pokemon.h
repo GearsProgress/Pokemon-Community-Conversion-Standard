@@ -56,6 +56,8 @@ public:
     Pokemon();
     virtual ~Pokemon() {};
     virtual u32 getSpeciesIndexNumber();
+    virtual byte getUnownLetter();
+    virtual bool getIsShiny();
 
 #if ON_GBA
 #else
