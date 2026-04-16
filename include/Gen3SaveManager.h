@@ -38,6 +38,8 @@ class Gen3Pokemon;
  *     virtual void seek(u32 offset) = 0;
  *     virtual void advance(u32 numBytes) = 0;
  *     virtual void rewind(u32 numBytes) = 0;
+ * 
+ *     virtual bool shouldRecalculateChecksumsOnFinish() const = 0;
  * protected:
  * private:
  * };
@@ -87,6 +89,14 @@ public:
      * @brief This function unlocks the Mystery Gift feature for FR/LG/E.
      */
     void setMysteryGiftUnlocked(bool shouldBeUnlocked);
+
+    /**
+     * @brief This function injects the specifid Mystery Event payload into the save file.
+     * Note: it expects the data to be in the .me3 file format.
+     * 
+     * Note 2: This function WON'T unlock the mystery event feature automatically!
+     */
+    void injectMysteryEvent(const u8 *mysteryEvent3Data, u32 size);
 
     bool isPokemonOwned(u16 speciesIndex) const;
     bool isPokemonSeen(u16 speciesIndex) const;

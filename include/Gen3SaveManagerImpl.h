@@ -14,6 +14,7 @@
 #define PCCS_MONS_PER_BOX 30
 #define PCCS_SINGLE_MON_BYTES_IN_BOX 80
 #define PCCS_OWNEDFLAGS_BASE_OFFSET 0x0028
+#define MYSTERY_EVENT_SCRIPT_SIZE 0x3EC
 
 extern "C"
 {
@@ -44,6 +45,29 @@ static void getMysteryEventFlagOffsetFor(Game game, u32& outFlagOffset)
     default:
         // mystery event is only available in emerald, ruby and sapphire
         outFlagOffset = 0;
+        break;
+    }
+}
+
+static void getMysteryEventScriptOffsetFor(Game game, u32& outScriptOffset)
+{
+    // https://projectpokemon.org/home/forums/topic/35903-gen-3-mystery-eventgift-research/
+    switch(game)
+    {
+    case Game::RUBY:
+    case Game::SAPPHIRE:
+        outScriptOffset = 0x0810;
+        break;
+    case Game::EMERALD:
+        outScriptOffset = 0x08A8;
+        break;
+    case Game::FIRERED:
+    case Game::LEAFGREEN:
+        outScriptOffset = 0x079C;
+        break;
+    default:
+        // mystery event is only available in emerald, ruby, sapphire, firered and leafgreen
+        outScriptOffset = 0;
         break;
     }
 }
@@ -317,6 +341,18 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::setMysteryGiftUnlocked(bool should
 }
 
 template <typename Gen3SaveFileReaderType>
+void Gen3SaveManager<Gen3SaveFileReaderType>::injectMysteryEvent(const u8 *mysteryEvent3Data, u32 size)
+{
+    u32 scriptOffset;
+    getMysteryEventScriptOffsetFor(gameType_, scriptOffset);
+    seekToSectionOffset(saveMetadata_, 4, scriptOffset);
+
+    saveReader_.write(mysteryEvent3Data, size);
+
+    saveMetadata_.sectionModified_[4] = true;
+}
+
+template <typename Gen3SaveFileReaderType>
 bool Gen3SaveManager<Gen3SaveFileReaderType>::isPokemonOwned(u16 speciesIndex) const
 {
     return getBitFlag(saveMetadata_, 0, PCCS_OWNEDFLAGS_BASE_OFFSET, speciesIndex - 1);
@@ -364,13 +400,17 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::readTrainerName(u8 *outputBuffer, 
 template <typename Gen3SaveFileReaderType>
 void Gen3SaveManager<Gen3SaveFileReaderType>::finishSave()
 {
-    for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
+    if(saveReader_.shouldRecalculateChecksumsOnFinish())
     {
-        if(saveMetadata_.sectionModified_[i])
+        for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
         {
-            updateSectionChecksum(saveMetadata_, i);
+            if(saveMetadata_.sectionModified_[i])
+            {
+                updateSectionChecksum(saveMetadata_, i);
+            }
         }
     }
+    memset(saveMetadata_.sectionModified_, 0, sizeof(saveMetadata_.sectionModified_));
 }
 
 template <typename Gen3SaveFileReaderType>
