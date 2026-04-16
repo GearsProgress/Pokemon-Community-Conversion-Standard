@@ -15,14 +15,11 @@ static void print_usage()
 
 int main(int argc, char **argv)
 {
-    uint8_t pk3Buffer[100 * 1024];
     if(argc != 3)
     {
         print_usage();
         return EXIT_FAILURE;
     }
-
-    const int boxIndex = std::atoi(argv[3]);
 
     FILE *savFile = fopen(argv[1], "r+b");
     if(!savFile)

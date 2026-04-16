@@ -28,6 +28,49 @@ void ptgb_mgba_print(int level, const char *format_str, ...)
 #endif
 }
 
+static void getMysteryEventFlagOffsetFor(Game game, u32& outFlagOffset)
+{
+    // https://projectpokemon.org/home/forums/topic/35903-gen-3-mystery-eventgift-research/
+    // https://github.com/projectpokemon/Gen3-WCTool/blob/master/WC3Tool/WC3/SAV3.cs
+    switch(game)
+    {
+    case Game::RUBY:
+    case Game::SAPPHIRE:
+        outFlagOffset = 0x03A9;
+        break;
+    case Game::EMERALD:
+        outFlagOffset = 0x0405;
+        break;
+    default:
+        // mystery event is only available in emerald, ruby and sapphire
+        outFlagOffset = 0;
+        break;
+    }
+}
+
+static void getMysteryGiftFlagOffsetAndMaskFor(Game game, Language lang, u32& outFlagOffset, u32 &outFlagIndex)
+{
+    // https://projectpokemon.org/home/forums/topic/35903-gen-3-mystery-eventgift-research/
+    // https://github.com/projectpokemon/Gen3-WCTool/blob/master/WC3Tool/WC3/SAV3.cs
+    switch(game)
+    {
+    case Game::FIRERED:
+    case Game::LEAFGREEN:
+        outFlagOffset = 0x0067;
+        outFlagIndex = 1;
+        break;
+    case Game::EMERALD:
+        outFlagOffset = (lang == Language::JAPANESE) ? 0x0405 : 0x040B;
+        outFlagIndex = (lang == Language::JAPANESE) ? 4 : 3;
+        break;
+    default:
+        // mystery gift is only available in emerald, firered and leafgreen
+        outFlagOffset = 0;
+        outFlagIndex = 0;
+        break;
+    }
+}
+
 template <typename Gen3SaveFileReaderType>
 Gen3SaveManager<Gen3SaveFileReaderType>::Gen3SaveManager(Game gameType, Language gameLanguage, Gen3SaveFileReaderType &saveReader)
     : gameType_(gameType)
@@ -210,6 +253,70 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::setNationalDexUnlocked(bool should
 }
 
 template <typename Gen3SaveFileReaderType>
+bool Gen3SaveManager<Gen3SaveFileReaderType>::isMysteryEventUnlocked() const
+{
+    u32 flagOffset;
+    
+    getMysteryEventFlagOffsetFor(gameType_, flagOffset);
+
+    if(flagOffset == 0)
+    {
+        // mystery event is only available in emerald, ruby and sapphire
+        return false;
+    }
+    return getBitFlag(saveMetadata_, 2, flagOffset, 4);
+}
+
+template <typename Gen3SaveFileReaderType>
+void Gen3SaveManager<Gen3SaveFileReaderType>::setMysteryEventUnlocked(bool shouldBeUnlocked)
+{
+    u32 flagOffset;
+    
+    getMysteryEventFlagOffsetFor(gameType_, flagOffset);
+    
+    if(flagOffset == 0)
+    {
+        // mystery event is only available in emerald, ruby and sapphire
+        return;
+    }
+    setBitFlag(saveMetadata_, 2, flagOffset, 4, shouldBeUnlocked);
+}
+
+template <typename Gen3SaveFileReaderType>
+bool Gen3SaveManager<Gen3SaveFileReaderType>::isMysteryGiftUnlocked() const
+{
+    u32 flagOffset;
+    u32 flagIndex;
+
+    getMysteryGiftFlagOffsetAndMaskFor(gameType_, gameLanguage_, flagOffset, flagIndex);
+
+    if(flagOffset == 0)
+    {
+        // mystery gift is only available in emerald, firered and leafgreen
+        return false;
+    }
+
+    return getBitFlag(saveMetadata_, 2, flagOffset, flagIndex);
+}
+
+template <typename Gen3SaveFileReaderType>
+void Gen3SaveManager<Gen3SaveFileReaderType>::setMysteryGiftUnlocked(bool shouldBeUnlocked)
+{
+    u32 flagOffset;
+    u32 flagIndex;
+
+    getMysteryGiftFlagOffsetAndMaskFor(gameType_, gameLanguage_, flagOffset, flagIndex);
+
+    if(flagOffset == 0)
+    {
+        // mystery gift is only available in emerald, firered and leafgreen
+        return;
+    }
+
+    setBitFlag(saveMetadata_, 2, flagOffset, flagIndex, shouldBeUnlocked);
+}
+
+template <typename Gen3SaveFileReaderType>
 bool Gen3SaveManager<Gen3SaveFileReaderType>::isPokemonOwned(u16 speciesIndex) const
 {
     return getBitFlag(saveMetadata_, 0, PCCS_OWNEDFLAGS_BASE_OFFSET, speciesIndex - 1);
@@ -379,7 +486,7 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::getSeenFlagOffsetsForGame(Game gam
 }
 
 template <typename Gen3SaveFileReaderType>
-bool Gen3SaveManager<Gen3SaveFileReaderType>::getBitFlag(const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex)
+bool Gen3SaveManager<Gen3SaveFileReaderType>::getBitFlag(const Gen3SaveMetadata& saveMetadata, u8 sectionId, u32 flagBaseOffset, u32 flagIndex) const
 {
     u8 flagByte;
 
