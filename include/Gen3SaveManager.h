@@ -98,6 +98,14 @@ public:
      */
     void injectMysteryEvent(const u8 *mysteryEvent3Data, u32 size);
 
+    /**
+     * @brief This function injects the specified Mystery Gift payload into the save file.
+     * Note: it expects the data to be in the .wc3 file format.
+     * 
+     * Note 2: This function WON'T unlock the mystery gift feature automatically!
+     */
+    void injectMysteryGift(const u8 *mysteryGiftData, u32 size);
+
     bool isPokemonOwned(u16 speciesIndex) const;
     bool isPokemonSeen(u16 speciesIndex) const;
     void setPokemonOwned(u16 speciesIndex, bool owned);
