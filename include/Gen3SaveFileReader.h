@@ -27,6 +27,11 @@ public:
     void seek(u32 offset);
     void advance(u32 numBytes);
     void rewind(u32 numBytes);
+
+    /**
+     * @brief Indicates whether the Gen3SaveManager should recalculate checksums when finishSave is called.
+     */
+    bool shouldRecalculateChecksumsOnFinish() const;
 protected:
 private:
     FILE* saveFile_;

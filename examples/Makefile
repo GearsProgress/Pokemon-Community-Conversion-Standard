@@ -10,6 +10,8 @@ all:
 	$(MAKE) -C isMysteryEventUnlocked $(MAKECMDGOALS) $(MAKEOVERRIDES)
 	$(MAKE) -C unlockMysteryGift $(MAKECMDGOALS) $(MAKEOVERRIDES)
 	$(MAKE) -C isMysteryGiftUnlocked $(MAKECMDGOALS) $(MAKEOVERRIDES)
+	$(MAKE) -C injectMysteryEvent $(MAKECMDGOALS) $(MAKEOVERRIDES)
+	$(MAKE) -C injectMysteryGift $(MAKECMDGOALS) $(MAKEOVERRIDES)
 	$(MAKE) -C scratch $(MAKECMDGOALS) $(MAKEOVERRIDES)
 
 clean:
@@ -21,4 +23,6 @@ clean:
 	$(MAKE) -C isMysteryEventUnlocked clean
 	$(MAKE) -C unlockMysteryGift clean
 	$(MAKE) -C isMysteryGiftUnlocked clean
+	$(MAKE) -C injectMysteryEvent clean
+	$(MAKE) -C injectMysteryGift clean
 	$(MAKE) -C scratch clean	

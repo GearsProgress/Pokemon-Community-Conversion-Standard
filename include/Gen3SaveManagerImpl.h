@@ -14,6 +14,13 @@
 #define PCCS_MONS_PER_BOX 30
 #define PCCS_SINGLE_MON_BYTES_IN_BOX 80
 #define PCCS_OWNEDFLAGS_BASE_OFFSET 0x0028
+#define MYSTERY_EVENT_SCRIPT_SIZE 0x3EC
+// 2 bytes CRC16, 2 bytes padding and 332 bytes wondercard data
+#define WONDERCARD_SIZE 0x150
+#define WONDER_CARD_TEXT_LENGTH 40
+#define SECTION2_FLAGS_BASE 0x2F0
+// Taken from 
+#define FLAG_HIDE_POKEMON_CENTER_2F_MYSTERY_GIFT_MAN 0x2BE
 
 extern "C"
 {
@@ -28,7 +35,7 @@ void ptgb_mgba_print(int level, const char *format_str, ...)
 #endif
 }
 
-static void getMysteryEventFlagOffsetFor(Game game, u32& outFlagOffset)
+static void getMysteryEventFlagOffsetFor(Game game, u32 &outFlagOffset)
 {
     // https://projectpokemon.org/home/forums/topic/35903-gen-3-mystery-eventgift-research/
     // https://github.com/projectpokemon/Gen3-WCTool/blob/master/WC3Tool/WC3/SAV3.cs
@@ -44,6 +51,47 @@ static void getMysteryEventFlagOffsetFor(Game game, u32& outFlagOffset)
     default:
         // mystery event is only available in emerald, ruby and sapphire
         outFlagOffset = 0;
+        break;
+    }
+}
+
+static void getWondercardOffsetFor(Game game, Language lang, u32 &outOffset)
+{
+    switch(game)
+    {
+        case Game::EMERALD:
+            outOffset = (lang == JAPANESE) ? 0x0490 : 0x056C;
+            break;
+        case Game::FIRERED:
+        case Game::LEAFGREEN:
+            outOffset = (lang == JAPANESE) ? 0x0384 : 0x0460;
+            break;
+        default:
+            // mystery gift is only available in emerald, firered and leafgreen
+            outOffset = 0;
+            break;
+    }
+}
+
+static void getMysteryScriptOffsetFor(Game game, u32 &outScriptOffset)
+{
+    // https://projectpokemon.org/home/forums/topic/35903-gen-3-mystery-eventgift-research/
+    switch(game)
+    {
+    case Game::RUBY:
+    case Game::SAPPHIRE:
+        outScriptOffset = 0x0810;
+        break;
+    case Game::EMERALD:
+        outScriptOffset = 0x08A8;
+        break;
+    case Game::FIRERED:
+    case Game::LEAFGREEN:
+        outScriptOffset = 0x079C;
+        break;
+    default:
+        // mystery event is only available in emerald, ruby, sapphire, firered and leafgreen
+        outScriptOffset = 0;
         break;
     }
 }
@@ -317,6 +365,67 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::setMysteryGiftUnlocked(bool should
 }
 
 template <typename Gen3SaveFileReaderType>
+void Gen3SaveManager<Gen3SaveFileReaderType>::injectMysteryEvent(const u8 *mysteryEvent3Data, u32 size)
+{
+    u32 scriptOffset;
+    getMysteryScriptOffsetFor(gameType_, scriptOffset);
+    seekToSectionOffset(saveMetadata_, 4, scriptOffset);
+
+    saveReader_.write(mysteryEvent3Data, size);
+
+    saveMetadata_.sectionModified_[4] = true;
+}
+
+
+// The .wc3 file looks like this:
+// Maps mostly to struct Wondercard (https://github.com/pret/pokeemerald/blob/master/include/global.h)
+// 0x000 - 0x004 CRC16 + 2 bytes padding
+// 0x004 - 0x150 Wondercard data.
+// 0x150 - 0x178 Footer line 1
+// 0x178 - 0x1A0 Footer line 2
+// 0x1A0 - 0x58C Mystery Gift Script
+//
+// Note: the Wondercard bodyText is truncated
+template <typename Gen3SaveFileReaderType>
+void Gen3SaveManager<Gen3SaveFileReaderType>::injectMysteryGift(const u8 *mysteryGiftData, u32 size)
+{
+    if(size < WONDERCARD_SIZE)
+    {
+        // the data is too small to even contain a valid wondercard, so we won't write anything to the save file
+        return;
+    }
+
+    const u8 *cur = mysteryGiftData;
+
+    u32 offset;
+    getWondercardOffsetFor(gameType_, gameLanguage_, offset);
+    seekToSectionOffset(saveMetadata_, 4, offset);
+
+    saveReader_.write(cur, WONDERCARD_SIZE);
+    cur += WONDERCARD_SIZE;
+
+    // the Wondercard bodytext is truncated by 158 bytes in the 336 bytes of the wondercard
+    saveReader_.advance(158);
+
+    // https://github.com/pret/pokeemerald/blob/master/include/global.h
+    // footerLine1Text
+    saveReader_.write(cur, WONDER_CARD_TEXT_LENGTH);
+    cur += WONDER_CARD_TEXT_LENGTH;
+
+    // footerLine2Text
+    saveReader_.write(cur, WONDER_CARD_TEXT_LENGTH);
+    cur += WONDER_CARD_TEXT_LENGTH;
+
+    // script data
+    getMysteryScriptOffsetFor(gameType_, offset);
+    seekToSectionOffset(saveMetadata_, 4, offset);
+    saveReader_.write(cur, (mysteryGiftData + size) - cur);
+
+    setBitFlag(saveMetadata_, 1, SECTION2_FLAGS_BASE, FLAG_HIDE_POKEMON_CENTER_2F_MYSTERY_GIFT_MAN, false);
+    saveMetadata_.sectionModified_[4] = true;
+}
+
+template <typename Gen3SaveFileReaderType>
 bool Gen3SaveManager<Gen3SaveFileReaderType>::isPokemonOwned(u16 speciesIndex) const
 {
     return getBitFlag(saveMetadata_, 0, PCCS_OWNEDFLAGS_BASE_OFFSET, speciesIndex - 1);
@@ -364,13 +473,17 @@ void Gen3SaveManager<Gen3SaveFileReaderType>::readTrainerName(u8 *outputBuffer, 
 template <typename Gen3SaveFileReaderType>
 void Gen3SaveManager<Gen3SaveFileReaderType>::finishSave()
 {
-    for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
+    if(saveReader_.shouldRecalculateChecksumsOnFinish())
     {
-        if(saveMetadata_.sectionModified_[i])
+        for(unsigned i = 0; i < NUM_SAVE_SECTIONS; ++i)
         {
-            updateSectionChecksum(saveMetadata_, i);
+            if(saveMetadata_.sectionModified_[i])
+            {
+                updateSectionChecksum(saveMetadata_, i);
+            }
         }
     }
+    memset(saveMetadata_.sectionModified_, 0, sizeof(saveMetadata_.sectionModified_));
 }
 
 template <typename Gen3SaveFileReaderType>

@@ -99,4 +99,9 @@ void Gen3SaveFileReader::rewind(u32 numBytes)
     fseek(saveFile_, -static_cast<long>(numBytes), SEEK_CUR);
     curOffset_ -= numBytes;
 }
+
+bool Gen3SaveFileReader::shouldRecalculateChecksumsOnFinish() const
+{
+    return true;
+}
 #endif
