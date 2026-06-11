@@ -142,13 +142,13 @@ const struct ROM_DATA rom_data_values_fre[] = {
         .loc_voicegroup = 0x84492c0,
         .loc_sPicTable_NPC = 0x83753ec,
 
-        // TODO
-        .loc_gMonFrontPicTable = 0,
-        .loc_gMonPaletteTable = 0,
-        .loc_gMonShinyPaletteTable = 0,
-        .loc_gMonIconTable = 0,
-        .loc_gMonIconPaletteIndices = 0,
-        .loc_gMonIconPalettes = 0,
+        // UNTESTED BLOCK, using FRE_RUBY_v0 values
+        .loc_gMonFrontPicTable = 0x081F075C,
+        .loc_gMonPaletteTable = 0x081F29BC,
+        .loc_gMonShinyPaletteTable = 0x081F377C,
+        .loc_gMonIconTable = 0x083C3704,
+        .loc_gMonIconPaletteIndices = 0x083C3DE4,
+        .loc_gMonIconPalettes = 0x08E968FC,
 
         // The following should be consistant across languages and revisions.
         .loc_gSaveBlock1 = 0x02025734,
