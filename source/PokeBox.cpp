@@ -123,6 +123,11 @@ void PokeBox::convertPkmn(int index)
     GBPokemon *oldPkmn = (GBPokemon *)(basePkmn);
 
     oldPkmn->convertToGen3(convertedPkmn, stabilize_mythical);
+
+    // Set the initial checksum so that isEncrypted() correctly returns false
+    // for this freshly converted, unencrypted Pokemon.
+    convertedPkmn->setChecksum(convertedPkmn->calculateChecksum());
+
     delete getPokemon(index); // This is causing issues. Is it needed??
     boxStorage[index] = convertedPkmn;
 }

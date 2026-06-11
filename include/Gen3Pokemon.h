@@ -200,7 +200,7 @@ public:
     u32 getBlockBoxRS() { return getVar(blockBoxRS); }
     u32 getMarkings() { return getVar(markings); }
     u32 getChecksum() { return getVar(checksum); }
-    u32 getSpeciesIndexNumber() { return getVar(speciesIndexNumber, getSubstructOffset(SUB_G) ); }
+    u32 getSpeciesIndexNumber() { return getVar(speciesIndexNumber, getSubstructOffset(SUB_G)); }
     u32 getHeldItem() { return getVar(heldItem, getSubstructOffset(SUB_G)); }
     u32 getExpPoints() { return getVar(expPoints, getSubstructOffset(SUB_G)); }
     u32 getFriendship() { return getVar(friendship, getSubstructOffset(SUB_G)); }
@@ -293,13 +293,13 @@ public:
      * @brief This function checks whether the data is currently encrypted.
      * It does so by checking if the checksum matches. If it does, then it's decrypted.
      * If it doesn't, then it's still encrypted.
-     * 
+     *
      * This is based on PK3.cs ->DecryptParty() in PKHex.
      */
     bool isEncrypted();
-private:
     u16 calculateChecksum();
 
+private:
     // Encryption and decryption is the exact same operation. So we can just have one function for both.
     void cryptStructures();
 };
