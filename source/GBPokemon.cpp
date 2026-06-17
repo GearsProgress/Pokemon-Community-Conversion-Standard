@@ -320,8 +320,8 @@ void GBPokemon::updateValidity()
 
 bool GBPokemon::externalConvertNickname(byte outputArray[])
 {
-    pokeTable->load_input_charset(generation, ENGLISH);
-    pokeTable->load_gen3_charset(ENGLISH);
+    pokeTable->load_input_charset(generation, getLanguage());
+    pokeTable->load_gen3_charset(getLanguage());
     for (int i = 0; i < 10; i++)
     {
         outputArray[i] = pokeTable->get_gen_3_char(pokeTable->input_charset[nicknameArray[i]]);
@@ -376,8 +376,8 @@ bool GBPokemon::convertTrainerID(Gen3Pokemon *newPkmn)
 
 bool GBPokemon::convertNickname(Gen3Pokemon *newPkmn)
 {
-    pokeTable->load_input_charset(generation, ENGLISH);
-    pokeTable->load_gen3_charset(ENGLISH);
+    pokeTable->load_input_charset(generation, getLanguage());
+    pokeTable->load_gen3_charset(getLanguage());
     for (int i = 0; i < 10; i++)
     {
         newPkmn->setNicknameLetter(i, pokeTable->get_gen_3_char(pokeTable->input_charset[nicknameArray[i]]));
@@ -402,8 +402,8 @@ bool GBPokemon::convertMiscFlags(Gen3Pokemon *newPkmn)
 
 bool GBPokemon::convertTrainerNickname(Gen3Pokemon *newPkmn)
 {
-    pokeTable->load_input_charset(1, ENGLISH);
-    pokeTable->load_gen3_charset(ENGLISH);
+    pokeTable->load_input_charset(1, getLanguage());
+    pokeTable->load_gen3_charset(getLanguage());
 
     for (int i = 0; i < 7; i++)
     {

@@ -73,9 +73,14 @@ bool PokeBox::removePokemon(int index)
 // This is used to load our data in from an array
 void PokeBox::loadData(int generation, Language nLang, const byte nDataArray[])
 {
-    if (nLang != ENGLISH)
+    switch (nLang)
     {
-        return; // Other languages are not supported yet
+    case ENGLISH:
+        break;
+    case FRENCH:
+        break;
+    default:
+        return;
     }
     for (int pkmnIndex = 0; pkmnIndex < nDataArray[0]; pkmnIndex++)
     {
@@ -118,6 +123,11 @@ void PokeBox::convertPkmn(int index)
     GBPokemon *oldPkmn = (GBPokemon *)(basePkmn);
 
     oldPkmn->convertToGen3(convertedPkmn, stabilize_mythical);
+
+    // Set the initial checksum so that isEncrypted() correctly returns false
+    // for this freshly converted, unencrypted Pokemon.
+    convertedPkmn->setChecksum(convertedPkmn->calculateChecksum());
+
     delete getPokemon(index); // This is causing issues. Is it needed??
     boxStorage[index] = convertedPkmn;
 }
