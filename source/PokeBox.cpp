@@ -70,7 +70,7 @@ bool PokeBox::removePokemon(int index)
     return false;
 }
 
-// This is used to load our data in from an array
+// This used to load our data in from an array
 void PokeBox::loadData(int generation, Language nLang, const byte nDataArray[])
 {
     switch (nLang)
@@ -78,6 +78,12 @@ void PokeBox::loadData(int generation, Language nLang, const byte nDataArray[])
     case ENGLISH:
         break;
     case FRENCH:
+        break;
+    case ITALIAN:
+        break;
+    case GERMAN:
+        break;
+    case SPANISH:
         break;
     default:
         return;
