@@ -6,20 +6,11 @@
 #include "text_engine.h"
 #endif
 
-PokeBox::PokeBox()
-{
-    nullMon = new Pokemon();
-}
+PokeBox::PokeBox() { nullMon = new Pokemon(); }
 
-PokeBox::PokeBox(PokemonTables *nTable)
-{
-    table = nTable;
-}
+PokeBox::PokeBox(PokemonTables *nTable) { table = nTable; }
 
-void PokeBox::setTable(PokemonTables *nTable)
-{
-    table = nTable;
-}
+void PokeBox::setTable(PokemonTables *nTable) { table = nTable; }
 
 bool PokeBox::addPokemon(Pokemon *currPkmn)
 {
@@ -70,7 +61,7 @@ bool PokeBox::removePokemon(int index)
     return false;
 }
 
-// This is used to load our data in from an array
+// This used to load our data in from an array
 void PokeBox::loadData(int generation, Language nLang, const byte nDataArray[])
 {
     switch (nLang)
@@ -78,6 +69,12 @@ void PokeBox::loadData(int generation, Language nLang, const byte nDataArray[])
     case ENGLISH:
         break;
     case FRENCH:
+        break;
+    case ITALIAN:
+        break;
+    case GERMAN:
+        break;
+    case SPANISH:
         break;
     default:
         return;
@@ -104,8 +101,7 @@ void PokeBox::loadData(int generation, Language nLang, const byte nDataArray[])
         trainerNameOffset += pkmnIndex * newPkmn->OTArraySize;
         nicknameOffset += pkmnIndex * newPkmn->nicknameArraySize;
 
-        newPkmn->loadData(
-            nLang,
+        newPkmn->loadData(nLang,
             &nDataArray[dataOffset],        // Pokemon Data
             &nDataArray[nicknameOffset],    // Nickname
             &nDataArray[trainerNameOffset], // Trainer Name
@@ -140,10 +136,7 @@ void PokeBox::convertAll()
     }
 }
 
-int PokeBox::getNumInBox()
-{
-    return currIndex;
-}
+int PokeBox::getNumInBox() { return currIndex; }
 
 int PokeBox::getNumValid()
 {

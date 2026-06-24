@@ -662,7 +662,7 @@ enum Language
     FRENCH,
     ITALIAN,
     GERMAN,
-    SPANISH,
+    SPANISH = 7,
     KOREAN,
 };
 

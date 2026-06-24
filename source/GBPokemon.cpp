@@ -14,7 +14,8 @@ GBPokemon::GBPokemon()
 }
 
 // This is used to load our data in from an array
-void GBPokemon::loadData(Language nLang, const byte nDataArray[], const byte nNicknameArray[], const byte nOTArray[], byte nExternalIndexNum)
+void GBPokemon::loadData(Language nLang, const byte nDataArray[],
+    const byte nNicknameArray[], const byte nOTArray[], byte nExternalIndexNum)
 {
     memcpy(dataArrayPtr, nDataArray, dataArraySize);
     memcpy(nicknameArray, nNicknameArray, nicknameArraySize);
@@ -33,7 +34,8 @@ void GBPokemon::loadData(Language nLang, const byte nDataArray[], const byte nNi
     updateValidity();
 }
 
-// This is used to easily print out a Pokemon, when using a standard C++ terminal
+// This is used to easily print out a Pokemon, when using a standard C++
+// terminal
 #if ON_GBA
 #else
 std::string GBPokemon::parentPrint()
@@ -46,7 +48,8 @@ std::string GBPokemon::parentPrint()
 
     for (int i = 0; i < 10; i++)
     {
-        os << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)nicknameArray[i] << (i < 9 ? ", " : "");
+        os << "0x" << std::setfill('0') << std::setw(2) << std::right
+           << std::hex << (int)nicknameArray[i] << (i < 9 ? ", " : "");
     }
 
     os << "] (";
@@ -61,7 +64,8 @@ std::string GBPokemon::parentPrint()
 
     for (int i = 0; i < 7; i++)
     {
-        os << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)OTArray[i] << (i < 6 ? ", " : "");
+        os << "0x" << std::setfill('0') << std::setw(2) << std::right
+           << std::hex << (int)OTArray[i] << (i < 6 ? ", " : "");
     }
 
     os << "] (";
@@ -72,15 +76,18 @@ std::string GBPokemon::parentPrint()
     }
 
     os << ")" << "\n"
-       << std::dec
-       << "Trainer ID: " << getTrainerID() << "\n"
+       << std::dec << "Trainer ID: " << getTrainerID() << "\n"
        << "Level: " << getLevel() << "\n"
        << "Exp: " << getExpPoints() << "\n"
        << "Moves: "
-       << "\n\t" << getMove(0) << " (" << getPPTotal(0) << " PP, " << getPPUpNum(0) << " PP Ups" << ")"
-       << "\n\t" << getMove(1) << " (" << getPPTotal(1) << " PP, " << getPPUpNum(1) << " PP Ups" << ")"
-       << "\n\t" << getMove(2) << " (" << getPPTotal(2) << " PP, " << getPPUpNum(2) << " PP Ups" << ")"
-       << "\n\t" << getMove(3) << " (" << getPPTotal(3) << " PP, " << getPPUpNum(3) << " PP Ups" << ")" << "\n"
+       << "\n\t" << getMove(0) << " (" << getPPTotal(0) << " PP, "
+       << getPPUpNum(0) << " PP Ups" << ")"
+       << "\n\t" << getMove(1) << " (" << getPPTotal(1) << " PP, "
+       << getPPUpNum(1) << " PP Ups" << ")"
+       << "\n\t" << getMove(2) << " (" << getPPTotal(2) << " PP, "
+       << getPPUpNum(2) << " PP Ups" << ")"
+       << "\n\t" << getMove(3) << " (" << getPPTotal(3) << " PP, "
+       << getPPUpNum(3) << " PP Ups" << ")" << "\n"
        << "Is Shiny: " << getIsShiny() << "\n";
     return os.str();
 }
@@ -106,10 +113,18 @@ bool GBPokemon::setDV(Stat currStat, byte newVal)
 {
     if (currStat == HP)
     {
-        return setVar(DVs[ATTACK][generation - 1], (getVar(DVs[ATTACK][generation - 1]) & 0b1110) | ((newVal >> 3) & 0x1)) &&
-               setVar(DVs[DEFENSE][generation - 1], (getVar(DVs[DEFENSE][generation - 1]) & 0b1110) | ((newVal >> 2) & 0x1)) &&
-               setVar(DVs[SPEED][generation - 1], (getVar(DVs[SPEED][generation - 1]) & 0b1110) | ((newVal >> 1) & 0x1)) &&
-               setVar(DVs[SPECIAL][generation - 1], (getVar(DVs[SPECIAL][generation - 1]) & 0b1110) | ((newVal >> 0) & 0x1));
+        return setVar(DVs[ATTACK][generation - 1],
+                   (getVar(DVs[ATTACK][generation - 1]) & 0b1110) |
+                       ((newVal >> 3) & 0x1)) &&
+               setVar(DVs[DEFENSE][generation - 1],
+                   (getVar(DVs[DEFENSE][generation - 1]) & 0b1110) |
+                       ((newVal >> 2) & 0x1)) &&
+               setVar(DVs[SPEED][generation - 1],
+                   (getVar(DVs[SPEED][generation - 1]) & 0b1110) |
+                       ((newVal >> 1) & 0x1)) &&
+               setVar(DVs[SPECIAL][generation - 1],
+                   (getVar(DVs[SPECIAL][generation - 1]) & 0b1110) |
+                       ((newVal >> 0) & 0x1));
     }
     else
     {
@@ -158,10 +173,8 @@ Nature GBPokemon::getVirtualConsoleNature()
 
 bool GBPokemon::getIsShiny()
 {
-    return ((getDV(ATTACK) & 0b0010) == 0b0010) &&
-           getDV(DEFENSE) == 10 &&
-           getDV(SPEED) == 10 &&
-           getDV(SPECIAL) == 10;
+    return ((getDV(ATTACK) & 0b0010) == 0b0010) && getDV(DEFENSE) == 10 &&
+           getDV(SPEED) == 10 && getDV(SPECIAL) == 10;
 }
 
 bool GBPokemon::convertToGen3(Gen3Pokemon *newPkmn, bool sanitizeMythicals)
@@ -173,40 +186,28 @@ bool GBPokemon::convertToGen3(Gen3Pokemon *newPkmn, bool sanitizeMythicals)
 
     bool valid =
         // Start with things that effect the PID
-        convertSpeciesIndexNumber(newPkmn) &&
-        setRequestedLetter(newPkmn) &&
-        setRequestedNature(newPkmn) &&
-        setRequestedGender(newPkmn) &&
-        setRequestedAbility(newPkmn) &&
-        setRequestedSize(newPkmn) &&
+        convertSpeciesIndexNumber(newPkmn) && setRequestedLetter(newPkmn) &&
+        setRequestedNature(newPkmn) && setRequestedGender(newPkmn) &&
+        setRequestedAbility(newPkmn) && setRequestedSize(newPkmn) &&
 
         // Then set the PID
         generatePersonalityValue(newPkmn, ABCD_U) &&
 
         // Then set everything else
-        convertTrainerID(newPkmn) &&
-        convertNickname(newPkmn) &&
-        convertLanguage(newPkmn) &&
-        convertMiscFlags(newPkmn) &&
-        convertTrainerNickname(newPkmn) &&
-        convertMarkings(newPkmn) &&
-        convertItem(newPkmn) &&
-        convertEXP(newPkmn) &&
-        convertFriendship(newPkmn) &&
-        convertMoves(newPkmn) &&
-        convertEVs(newPkmn) &&
-        convertContestConditions(newPkmn) &&
-        convertPokerus(newPkmn) &&
-        convertMetLocation(newPkmn) &&
-        convertMetLevel(newPkmn) &&
-        convertGameOfOrigin(newPkmn) &&
-        convertPokeball(newPkmn) &&
-        convertTrainerGender(newPkmn) &&
-        convertIVs(newPkmn) &&
-        convertRibbonsAndObedience(newPkmn) &&
+        convertTrainerID(newPkmn) && convertNickname(newPkmn) &&
+        convertLanguage(newPkmn) && convertMiscFlags(newPkmn) &&
+        convertTrainerNickname(newPkmn) && convertMarkings(newPkmn) &&
+        convertItem(newPkmn) && convertEXP(newPkmn) &&
+        convertFriendship(newPkmn) && convertMoves(newPkmn) &&
+        convertEVs(newPkmn) && convertContestConditions(newPkmn) &&
+        convertPokerus(newPkmn) && convertMetLocation(newPkmn) &&
+        convertMetLevel(newPkmn) && convertGameOfOrigin(newPkmn) &&
+        convertPokeball(newPkmn) && convertTrainerGender(newPkmn) &&
+        convertIVs(newPkmn) && convertRibbonsAndObedience(newPkmn) &&
         convertShininess(newPkmn);
 
-    if (sanitizeMythicals && (getSpeciesIndexNumber() == MEW || getSpeciesIndexNumber() == CELEBI))
+    if (sanitizeMythicals &&
+        (getSpeciesIndexNumber() == MEW || getSpeciesIndexNumber() == CELEBI))
     {
         // Modify the required data for the event
         valid &= loadEvent(newPkmn);
@@ -218,10 +219,8 @@ bool GBPokemon::convertToGen3(Gen3Pokemon *newPkmn, bool sanitizeMythicals)
 
 bool GBPokemon::loadEvent(Gen3Pokemon *newPkmn)
 {
-    bool valid =
-        generatePersonalityValue(newPkmn, BACD_R) &&
-        convertEVs(newPkmn) &&
-        convertIVs(newPkmn);
+    bool valid = generatePersonalityValue(newPkmn, BACD_R) &&
+                 convertEVs(newPkmn) && convertIVs(newPkmn);
     if (!valid)
     {
         return false;
@@ -289,7 +288,8 @@ bool GBPokemon::loadEvent(Gen3Pokemon *newPkmn)
         default:
             newPkmn->setLanguage(ENGLISH);
             newPkmn->setLevelMet(70);
-            if (newPkmn->getExpPoints() < 344960) // 344960 is level 70 for Celebi
+            if (newPkmn->getExpPoints() <
+                344960) // 344960 is level 70 for Celebi
             {
                 newPkmn->setExpPoints(344960);
             }
@@ -310,21 +310,38 @@ bool GBPokemon::loadEvent(Gen3Pokemon *newPkmn)
 void GBPokemon::updateValidity()
 {
     byte currSpeciesIndexNumber = getSpeciesIndexNumber();
-    isValid = ((currSpeciesIndexNumber <= CELEBI ||                          // Checks if the Pokemon is beyond the spported Pokemon, excluding Treecko for now
-                (currSpeciesIndexNumber == MISSINGNO && generation == 1)) && // But keep MissingNo
-               currSpeciesIndexNumber != 0 &&                                // Makes sure the Pokemon isn't a blank party space
-               currSpeciesIndexNumber == externalIndexNumber &&              // Checks that the Pokemon isn't a hybrid or an egg
-               getHeldItem() == 0                                            // Makes sure the current Pokemon doesn't have a held item
+    isValid = ((currSpeciesIndexNumber <=
+                       CELEBI || // Checks if the Pokemon is beyond the spported
+                                 // Pokemon, excluding Treecko for now
+                   (currSpeciesIndexNumber == MISSINGNO &&
+                       generation == 1)) && // But keep MissingNo
+               currSpeciesIndexNumber !=
+                   0 && // Makes sure the Pokemon isn't a blank party space
+               currSpeciesIndexNumber ==
+                   externalIndexNumber && // Checks that the Pokemon isn't a
+                                          // hybrid or an egg
+               getHeldItem() ==
+                   0 // Makes sure the current Pokemon doesn't have a held item
     );
 };
 
 bool GBPokemon::externalConvertNickname(byte outputArray[])
 {
-    pokeTable->load_input_charset(generation, getLanguage());
+    switch (getLanguage())
+    {
+    case SPANISH:
+        pokeTable->load_input_charset(generation, ENGLISH);
+        break;
+    default:
+        pokeTable->load_input_charset(generation, getLanguage());
+        break;
+    }
+
     pokeTable->load_gen3_charset(getLanguage());
     for (int i = 0; i < 10; i++)
     {
-        outputArray[i] = pokeTable->get_gen_3_char(pokeTable->input_charset[nicknameArray[i]]);
+        outputArray[i] = pokeTable->get_gen_3_char(
+            pokeTable->input_charset[nicknameArray[i]]);
     }
     outputArray[10] = 0xFF;
     return true;
@@ -355,9 +372,13 @@ bool GBPokemon::generatePersonalityValue(Gen3Pokemon *newPkmn, RNGMethod rng)
         // std::cout << "Testing PID: " << std::hex << pid << "\n";
         /*
         std::cout << "PV: " << newPkmn->getPersonalityValue() << "\n"
-                  << "Letter: " << newPkmn->getUnownLetter() << " | " << getUnownLetter() << "\n"
-                  << "Nature: " << newPkmn->getNature() << " | " << getVirtualConsoleNature() << "\n"
-                  << "Gender: " << newPkmn->getGender() << " | " << getGender() << "\n";
+                  << "Letter: " << newPkmn->getUnownLetter() << " | " <<
+        getUnownLetter() << "\n"
+                  << "Nature: " << newPkmn->getNature() << " | " <<
+        getVirtualConsoleNature() << "\n"
+                  << "Gender: " << newPkmn->getGender() << " | " << getGender()
+        <<
+        "\n";
                   */
     } while (!(
         newPkmn->getAbilityFromPersonalityValue() == newPkmn->internalAbility &&
@@ -376,11 +397,21 @@ bool GBPokemon::convertTrainerID(Gen3Pokemon *newPkmn)
 
 bool GBPokemon::convertNickname(Gen3Pokemon *newPkmn)
 {
-    pokeTable->load_input_charset(generation, getLanguage());
+    switch (getLanguage())
+    {
+    case SPANISH:
+        pokeTable->load_input_charset(generation, ENGLISH);
+        break;
+    default:
+        pokeTable->load_input_charset(generation, getLanguage());
+        break;
+    }
     pokeTable->load_gen3_charset(getLanguage());
     for (int i = 0; i < 10; i++)
     {
-        newPkmn->setNicknameLetter(i, pokeTable->get_gen_3_char(pokeTable->input_charset[nicknameArray[i]]));
+        newPkmn->setNicknameLetter(
+            i, pokeTable->get_gen_3_char(
+                   pokeTable->input_charset[nicknameArray[i]]));
     }
     return true;
 };
@@ -402,12 +433,21 @@ bool GBPokemon::convertMiscFlags(Gen3Pokemon *newPkmn)
 
 bool GBPokemon::convertTrainerNickname(Gen3Pokemon *newPkmn)
 {
-    pokeTable->load_input_charset(1, getLanguage());
+    switch (getLanguage())
+    {
+    case SPANISH:
+        pokeTable->load_input_charset(generation, ENGLISH);
+        break;
+    default:
+        pokeTable->load_input_charset(generation, getLanguage());
+        break;
+    }
     pokeTable->load_gen3_charset(getLanguage());
 
     for (int i = 0; i < 7; i++)
     {
-        newPkmn->setOTLetter(i, pokeTable->get_gen_3_char(pokeTable->input_charset[OTArray[i]]));
+        newPkmn->setOTLetter(
+            i, pokeTable->get_gen_3_char(pokeTable->input_charset[OTArray[i]]));
     }
 
     return true;
@@ -457,8 +497,8 @@ bool GBPokemon::convertItem(Gen3Pokemon *newPkmn)
 
 bool GBPokemon::convertEXP(Gen3Pokemon *newPkmn)
 {
-    // As per Poke Transporter, the level will be based on the level value, not the EXP
-    // Make sure Level is not over 100
+    // As per Poke Transporter, the level will be based on the level value, not
+    // the EXP Make sure Level is not over 100
 
     int speciesIndex = getSpeciesIndexNumber();
     int currLevel = getLevel();
@@ -475,13 +515,16 @@ bool GBPokemon::convertEXP(Gen3Pokemon *newPkmn)
         newPkmn->setExpPoints((4 * (currLevel * currLevel * currLevel)) / 5);
         break;
 
-    default: // MissingNo is the only one that should hit default, so match it to Porygon
+    default: // MissingNo is the only one that should hit default, so match it
+             // to Porygon
     case EXP_MED_FAST:
         newPkmn->setExpPoints(currLevel * currLevel * currLevel);
         break;
 
     case EXP_MED_SLOW:
-        newPkmn->setExpPoints(((6 * currLevel * currLevel * currLevel) / 5) - (15 * currLevel * currLevel) + (100 * currLevel) - 140);
+        newPkmn->setExpPoints(((6 * currLevel * currLevel * currLevel) / 5) -
+                              (15 * currLevel * currLevel) + (100 * currLevel) -
+                              140);
         break;
 
     case EXP_SLOW:
@@ -501,8 +544,7 @@ bool GBPokemon::convertMoves(Gen3Pokemon *newPkmn)
 {
     Species speciesIndexNum = (Species)getSpeciesIndexNumber();
     // Check that the moves are valid
-    if ((speciesIndexNum != SMEARGLE) &&
-        (speciesIndexNum != MISSINGNO) &&
+    if ((speciesIndexNum != SMEARGLE) && (speciesIndexNum != MISSINGNO) &&
         (speciesIndexNum != TREECKO)) // Ignore Smeargle, MissingNo, and Treecko
     {
         for (int i = 0; i < 4; i++)
@@ -556,7 +598,9 @@ bool GBPokemon::convertMoves(Gen3Pokemon *newPkmn)
     for (int i = 0; i < 4; i++)
     {
         int move = newPkmn->getMove(i);
-        newPkmn->setPPTotal(i, pokeTable->POWER_POINTS[move] + ((pokeTable->POWER_POINTS[move] / 5) * newPkmn->getPPUpNum(i)));
+        newPkmn->setPPTotal(i,
+            pokeTable->POWER_POINTS[move] +
+                ((pokeTable->POWER_POINTS[move] / 5) * newPkmn->getPPUpNum(i)));
     }
 
     return true;
@@ -717,7 +761,8 @@ bool GBPokemon::convertShininess(Gen3Pokemon *newPkmn)
 
     if ((getSpeciesIndexNumber() == 52) &&
         fnv1a_hash(trainerName, 7) == 1342961308 &&
-        (fnv1a_hash(nickname, 7) == 1515822901 || fnv1a_hash(nickname, 8) == 2671449886))
+        (fnv1a_hash(nickname, 7) == 1515822901 ||
+            fnv1a_hash(nickname, 8) == 2671449886))
     {
         for (int i = 1; i <= 4; i++)
         {
@@ -774,36 +819,40 @@ const DataVarInfo
     GBPokemon::ppUpNumMoveFour[2] = {{0x20, 2, 6}, {0x1A, 2, 6}},
     GBPokemon::ppNumTotalMoveFour[2] = {{0x20, 6, 0}, {0x1A, 6, 0}};
 
-const DataVarInfo
-    *GBPokemon::moves[4] = {
+const DataVarInfo *GBPokemon::moves[4] =
+    {
         GBPokemon::moveOne,
         GBPokemon::moveTwo,
         GBPokemon::moveThree,
         GBPokemon::moveFour,
 },
-    *GBPokemon::statExps[5] = {
-        GBPokemon::hpStatExp,
-        GBPokemon::atkStatExp,
-        GBPokemon::defStatExp,
-        GBPokemon::speStatExp,
-        GBPokemon::spcStatExp,
+                  *GBPokemon::statExps[5] =
+                      {
+                          GBPokemon::hpStatExp,
+                          GBPokemon::atkStatExp,
+                          GBPokemon::defStatExp,
+                          GBPokemon::speStatExp,
+                          GBPokemon::spcStatExp,
 },
-    *GBPokemon::DVs[5] = {
-        GBPokemon::atkDV, // This is wrong, but it will never be accessed anyway.
-        GBPokemon::atkDV,
-        GBPokemon::defDV,
-        GBPokemon::speDV,
-        GBPokemon::spcDV,
+                  *GBPokemon::DVs[5] =
+                      {
+                          GBPokemon::atkDV, // This is wrong, but it will never
+                                            // be accessed anyway.
+                          GBPokemon::atkDV,
+                          GBPokemon::defDV,
+                          GBPokemon::speDV,
+                          GBPokemon::spcDV,
 },
-    *GBPokemon::PPUpNums[4] = {
-        GBPokemon::ppUpNumMoveOne,
-        GBPokemon::ppUpNumMoveTwo,
-        GBPokemon::ppUpNumMoveThree,
-        GBPokemon::ppUpNumMoveFour,
+                  *GBPokemon::PPUpNums[4] =
+                      {
+                          GBPokemon::ppUpNumMoveOne,
+                          GBPokemon::ppUpNumMoveTwo,
+                          GBPokemon::ppUpNumMoveThree,
+                          GBPokemon::ppUpNumMoveFour,
 },
-    *GBPokemon::PPUpTotals[4] = {
-        GBPokemon::ppNumTotalMoveOne,
-        GBPokemon::ppNumTotalMoveTwo,
-        GBPokemon::ppNumTotalMoveThree,
-        GBPokemon::ppNumTotalMoveFour,
+                  *GBPokemon::PPUpTotals[4] = {
+                      GBPokemon::ppNumTotalMoveOne,
+                      GBPokemon::ppNumTotalMoveTwo,
+                      GBPokemon::ppNumTotalMoveThree,
+                      GBPokemon::ppNumTotalMoveFour,
 };
