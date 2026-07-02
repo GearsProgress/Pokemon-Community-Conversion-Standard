@@ -29,12 +29,7 @@ public:
     int getNumValid();
     bool stabilize_mythical = false;
 
-    bool getContainsMythical();
-    bool getContainsInvalid();
-    bool getContainsMissingNo();
-
 #if ON_GBA
-    bool getHasNewPkmn();
 #else
     friend std::ostream &operator<<(std::ostream &os, PokeBox &pc)
     {

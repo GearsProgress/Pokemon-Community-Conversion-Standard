@@ -4,7 +4,6 @@
 #if ON_GBA
 #include "global_frame_controller.h"
 #include "text_engine.h"
-#include "ptgb_save_data_manager.h"
 #endif
 
 PokeBox::PokeBox()
@@ -149,51 +148,7 @@ int PokeBox::getNumValid()
     return numValid;
 }
 
-bool PokeBox::getContainsMythical()
-{
-    bool out = false;
-    for (int i = 0; i < getNumInBox(); i++)
-    {
-        out |= (getPokemon(i)->getSpeciesIndexNumber() == MEW || getPokemon(i)->getSpeciesIndexNumber() == CELEBI);
-    }
-    return out;
-}
-
-bool PokeBox::getContainsInvalid()
-{
-	bool out = false;
-	for (int i = 0; i < getNumInBox(); i++)
-	{
-
-		out |= !getGBPokemon(i)->isValid;
-	}
-	return out;
-}
-
-bool PokeBox::getContainsMissingNo()
-{
-	bool out = false;
-	for (int i = 0; i < getNumInBox(); i++)
-	{
-
-		out |= 
-        getPokemon(i)->getSpeciesIndexNumber() == MISSINGNO;
-	}
-	return out;
-}
-
 #if ON_GBA
-
-bool PokeBox::getHasNewPkmn() // If Pokemon is not in the dex
-{
-    bool out = false;
-    for (int i = 0; i < getNumInBox(); i++)
-    {
-        out |= !is_caught(getPokemon(i)->getSpeciesIndexNumber());
-    }
-    return out;
-}
-
 #else
 std::string PokeBox::printDataArray()
 {
