@@ -1,5 +1,58 @@
 #include "GBPokemon.h"
 #include <cstring>
+#include <initializer_list>
+
+#include <cstdio>
+
+#define TRAINER_STRING_CONTROL_CHAR 0x5D
+#define OT_SIZE 7
+
+// Taken from PKHex PokeCrypto.cs
+#define SIZE_1ULIST 69
+#define SIZE_1JLIST 59
+#define SIZE_1PARTY 44
+#define SIZE_1STORED 33
+#define SIZE_2ULIST 73
+#define SIZE_2JLIST 63
+#define SIZE_2PARTY 48
+#define SIZE_2STORED 32
+
+#define STRINGSIZE_JPN 6
+#define STRINGSIZE_INT 11
+
+// store these as UTF-8 strings
+static const char *TRAINER_STRINGS[] = {
+    "",
+    "トレーナー",
+    "TRAINER",
+    "DRES.",
+    "ALLEN.",
+    "TRAINER",
+    "", // enum is discontinuous, so we just leave this one blank
+    "ENTREN.",
+    "트레이너"
+};
+
+static void determinePKFileFormat(unsigned fileSize, bool &hasNames, bool &isJapanese)
+{
+    switch(fileSize)
+    {
+        case SIZE_1ULIST:
+        case SIZE_2ULIST:
+            isJapanese = false;
+            hasNames = true;
+            break;
+        case SIZE_1JLIST:
+        case SIZE_2JLIST:
+            isJapanese = true;
+            hasNames = true;
+            break;
+        default:
+            isJapanese = false;
+            hasNames = false;
+            break;
+    }
+}
 
 // This constructor fills all our convenience arrays
 GBPokemon::GBPokemon()
@@ -34,6 +87,33 @@ void GBPokemon::loadData(Language nLang, const byte nDataArray[],
     updateValidity();
 }
 
+void GBPokemon::loadData(Language nLang, const byte pkFileData[], size_t pkFileDataSize)
+{
+    bool hasNames;
+    bool isJapanese;
+    determinePKFileFormat(pkFileDataSize, hasNames, isJapanese);
+
+    // offset based on code in PKHex.
+    // See:
+    //- EntityFormat.GetFormatInternal()
+    //- EntityFormat.GetFromBytes()
+    //- PokeList1.readFromSingle()
+    //- PokeList2.readFromSingle()
+    //- PokeList1.ReadFromList()
+    //- PokeList2.ReadFromList()
+    // The ReadFromList() functions skip the first 3 bytes.
+    // But this is only valid if the PK1 or PK2 is in the single-slot list format
+    const unsigned bodyOffset = hasNames ? 3 : 0;
+    const unsigned stringLength = isJapanese ? STRINGSIZE_JPN : STRINGSIZE_INT;
+    const byte speciesIndex = pkFileData[1];
+
+    const byte *body = pkFileData + bodyOffset;
+    const byte *ot = body + SIZE_1PARTY;
+    const byte *nickname = ot + stringLength;
+
+    loadData(nLang, body, nickname, ot, speciesIndex);
+}
+
 // This is used to easily print out a Pokemon, when using a standard C++
 // terminal
 #if ON_GBA
@@ -62,7 +142,7 @@ std::string GBPokemon::parentPrint()
     os << ")" << "\n"
        << "Original Trainer: [";
 
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < OT_SIZE; i++)
     {
         os << "0x" << std::setfill('0') << std::setw(2) << std::right
            << std::hex << (int)OTArray[i] << (i < 6 ? ", " : "");
@@ -70,7 +150,7 @@ std::string GBPokemon::parentPrint()
 
     os << "] (";
 
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < OT_SIZE; i++)
     {
         os << (char)(pokeTable->input_charset[(int)OTArray[i]]);
     }
@@ -340,10 +420,18 @@ bool GBPokemon::externalConvertNickname(byte outputArray[])
     pokeTable->load_gen3_charset(getLanguage());
     for (int i = 0; i < 10; i++)
     {
-        outputArray[i] = pokeTable->get_gen_3_char(
-            pokeTable->input_charset[nicknameArray[i]]);
+        if(nicknameArray[i] == POKEGB_STRING_TERMINATOR)
+        {
+            outputArray[i] = POKEGBA_STRING_TERMINATOR;
+            break;
+        }
+        else
+        {
+            outputArray[i] = pokeTable->get_gen_3_char(
+                pokeTable->input_charset[nicknameArray[i]]);
+        }
     }
-    outputArray[10] = 0xFF;
+    outputArray[10] = POKEGBA_STRING_TERMINATOR;
     return true;
 };
 
@@ -409,9 +497,14 @@ bool GBPokemon::convertNickname(Gen3Pokemon *newPkmn)
     pokeTable->load_gen3_charset(getLanguage());
     for (int i = 0; i < 10; i++)
     {
-        newPkmn->setNicknameLetter(
-            i, pokeTable->get_gen_3_char(
-                   pokeTable->input_charset[nicknameArray[i]]));
+        if(nicknameArray[i] == POKEGB_STRING_TERMINATOR)
+        {
+            newPkmn->setNicknameLetter(i, POKEGBA_STRING_TERMINATOR);
+        }
+        else
+        {
+            newPkmn->setNicknameLetter(i, pokeTable->get_gen_3_char(pokeTable->input_charset[nicknameArray[i]]));
+        }
     }
     return true;
 };
@@ -444,10 +537,47 @@ bool GBPokemon::convertTrainerNickname(Gen3Pokemon *newPkmn)
     }
     pokeTable->load_gen3_charset(getLanguage());
 
-    for (int i = 0; i < 7; i++)
+    /*
+     * So... in-game trades just put 0x5D 0x50 as the first 2 bytes of the OT name.
+     * 0x5D is a control character that gets drawn as TRAINER (or a translation of it)
+     *
+     * But we actually need to replace it with such a string when we convert to gen 3,
+     * because gen3 doesn't support it!
+     */
+    if(OTArray[0] == TRAINER_STRING_CONTROL_CHAR && OTArray[1] == POKEGB_STRING_TERMINATOR)
     {
-        newPkmn->setOTLetter(
-            i, pokeTable->get_gen_3_char(pokeTable->input_charset[OTArray[i]]));
+        const char *curTrainerString = TRAINER_STRINGS[static_cast<int>(getLanguage())];
+        u16 codepoint;
+        u32 numBytes;
+
+        // fill the OT array with the terminator first.
+        memset(OTArray, POKEGB_STRING_TERMINATOR, OT_SIZE);
+
+        // Now convert the hardcoded TRAINER variant string into the OT array.
+        for(unsigned i = 0; i < OT_SIZE; ++i)
+        {
+            if(*curTrainerString == '\0')
+            {
+                break;
+            }
+
+            numBytes = convert_utf8_to_utf16_char((const u8*)(curTrainerString), codepoint);
+            curTrainerString += numBytes;
+
+            OTArray[i] = get_char_from_charset(pokeTable->input_charset, codepoint);
+        }
+    }
+
+    for (int i = 0; i < OT_SIZE; i++)
+    {
+        if(OTArray[i] == POKEGB_STRING_TERMINATOR)
+        {
+            newPkmn->setOTLetter(i, POKEGBA_STRING_TERMINATOR);
+        }
+        else
+        {
+            newPkmn->setOTLetter(i, pokeTable->get_gen_3_char(pokeTable->input_charset[OTArray[i]]));
+        }
     }
 
     return true;

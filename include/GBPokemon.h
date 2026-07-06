@@ -1,6 +1,8 @@
 #ifndef GBPOKEMON_H
 #define GBPOKEMON_H
 
+#include <cstddef>
+
 #include "Pokemon.h"
 #include "Gen3Pokemon.h"
 
@@ -42,7 +44,12 @@ protected:
 #endif
 
 public:
-    virtual void loadData(Language nLang, const byte nDataArray[], const byte nNicknameArray[], const byte nOTArray[], byte nExternalIndexNum);
+    void loadData(Language nLang, const byte nDataArray[], const byte nNicknameArray[], const byte nOTArray[], byte nExternalIndexNum);
+
+    /**
+     * @brief This overload allows you to load a Pokémon from a PK1 or PK2 file.
+     */
+    void loadData(Language nLang, const byte pkFileData[], size_t pkFileDataSize);
 
     // All of the simple getters and setters are defined here
     u32 getLevel() { return getVar(level[generation - 1]); }
