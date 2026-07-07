@@ -7,9 +7,14 @@
 #include "ptgb_save_data_manager.h"
 #endif
 
-PokeBox::PokeBox() { nullMon = new Pokemon(); }
-
-PokeBox::PokeBox(PokemonTables *nTable) { table = nTable; }
+PokeBox::PokeBox(PokemonTables *nTable)
+    : table(nTable)
+    , boxStorage()
+    , nullMon(new Pokemon())
+    , currIndex(0)
+    , stabilize_mythical(false)
+{
+}
 
 void PokeBox::setTable(PokemonTables *nTable) { table = nTable; }
 
