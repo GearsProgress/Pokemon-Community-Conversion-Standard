@@ -12,11 +12,10 @@ private:
     PokemonTables *table;
     Pokemon *boxStorage[30];
     Pokemon *nullMon;
-    int currIndex = 0;
+    int currIndex;
 
 public:
-    PokeBox();
-    PokeBox(PokemonTables *nTable);
+    PokeBox(PokemonTables *nTable = nullptr);
     void setTable(PokemonTables *nTable);
     bool addPokemon(Pokemon *currPkmn);
     Pokemon *getPokemon(int index);
@@ -27,7 +26,7 @@ public:
     void convertAll();
     int getNumInBox();
     int getNumValid();
-    bool stabilize_mythical = false;
+    bool stabilize_mythical;
 
     bool getContainsMythical();
     bool getContainsInvalid();
