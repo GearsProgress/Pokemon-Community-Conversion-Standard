@@ -490,7 +490,7 @@ const DataVarInfo
 //     {0x1E, 16, 0};
 
 const DataVarInfo
-    *Gen3Pokemon::nickname[10] = {
+    *const Gen3Pokemon::nickname[10] = {
         &Gen3Pokemon::nicknameLetterOne,
         &Gen3Pokemon::nicknameLetterTwo,
         &Gen3Pokemon::nicknameLetterThree,
@@ -502,7 +502,7 @@ const DataVarInfo
         &Gen3Pokemon::nicknameLetterNine,
         &Gen3Pokemon::nicknameLetterTen,
 },
-    *Gen3Pokemon::originalTrainerName[7] = {
+    *const Gen3Pokemon::originalTrainerName[7] = {
         &Gen3Pokemon::originalTrainerNameLetterOne,
         &Gen3Pokemon::originalTrainerNameLetterTwo,
         &Gen3Pokemon::originalTrainerNameLetterThree,
@@ -533,7 +533,7 @@ const DataVarInfo
 // Gen3Pokemon::unused =
 //    {0x20 + 0x0A, 16, 0};
 const DataVarInfo
-    *Gen3Pokemon::ppUpNums[4] = {
+    *const Gen3Pokemon::ppUpNums[4] = {
         &Gen3Pokemon::ppUpNumMoveOne,
         &Gen3Pokemon::ppUpNumMoveTwo,
         &Gen3Pokemon::ppUpNumMoveThree,
@@ -559,13 +559,13 @@ const DataVarInfo
     Gen3Pokemon::moveFourPP =
         {0x20 + 0x0B, 8, 0};
 const DataVarInfo
-    *Gen3Pokemon::moves[4] = {
+    *const Gen3Pokemon::moves[4] = {
         &Gen3Pokemon::moveOne,
         &Gen3Pokemon::moveTwo,
         &Gen3Pokemon::moveThree,
         &Gen3Pokemon::moveFour,
 },
-    *Gen3Pokemon::ppUpTotals[4] = {
+    *const Gen3Pokemon::ppUpTotals[4] = {
         &Gen3Pokemon::moveOnePP,
         &Gen3Pokemon::moveTwoPP,
         &Gen3Pokemon::moveThreePP,
@@ -600,7 +600,7 @@ const DataVarInfo
         {0x20 + 0x0B, 8, 0};
 
 const DataVarInfo
-    *Gen3Pokemon::EVs[6] = {
+    *const Gen3Pokemon::EVs[6] = {
         &Gen3Pokemon::hpEVs,
         &Gen3Pokemon::attackEVs,
         &Gen3Pokemon::defenseEVs,
@@ -608,7 +608,7 @@ const DataVarInfo
         &Gen3Pokemon::specialAttackEVs,
         &Gen3Pokemon::specialDefenseEVs,
 },
-    *Gen3Pokemon::contestConditions[5] = {
+    *const Gen3Pokemon::contestConditions[5] = {
         &Gen3Pokemon::coolnessCondition,
         &Gen3Pokemon::beautyCondition,
         &Gen3Pokemon::cutenessCondition,
@@ -717,7 +717,7 @@ const DataVarInfo
         {0x20 + 0x08, 1, 31};
 
 const DataVarInfo
-    *Gen3Pokemon::IVs[6] = {
+    *const Gen3Pokemon::IVs[6] = {
         &Gen3Pokemon::hpIVs,
         &Gen3Pokemon::attackIVs,
         &Gen3Pokemon::defenseIVs,
@@ -725,7 +725,7 @@ const DataVarInfo
         &Gen3Pokemon::specialAttackIVs,
         &Gen3Pokemon::specialDefenseIVs,
 },
-    *Gen3Pokemon::ribbons[31] = {
+    *const Gen3Pokemon::ribbons[31] = {
         &Gen3Pokemon::coolNormalContestRibbon,
         &Gen3Pokemon::coolSuperContestRibbon,
         &Gen3Pokemon::coolHyperContestRibbon,

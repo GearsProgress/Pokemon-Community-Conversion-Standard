@@ -70,8 +70,8 @@ protected:
     // unknown;
 
     static const DataVarInfo
-        *nickname[10],
-        *originalTrainerName[7];
+        *const nickname[10],
+        *const originalTrainerName[7];
 
     // data section G
     static const DataVarInfo
@@ -86,7 +86,7 @@ protected:
     // unused;
 
     static const DataVarInfo
-        *ppUpNums[4];
+        *const ppUpNums[4];
 
     // data section A
     static const DataVarInfo
@@ -99,8 +99,8 @@ protected:
         moveThreePP,
         moveFourPP;
     static const DataVarInfo
-        *moves[4],
-        *ppUpTotals[4];
+        *const moves[4],
+        *const ppUpTotals[4];
 
     // data section E
     static const DataVarInfo
@@ -118,8 +118,8 @@ protected:
         sheen;
 
     static const DataVarInfo
-        *EVs[6],
-        *contestConditions[5];
+        *const EVs[6],
+        *const contestConditions[5];
 
     static const DataVarInfo
 
@@ -174,8 +174,8 @@ protected:
         fatefulEncounterObedience;
 
     static const DataVarInfo
-        *IVs[6],
-        *ribbons[31];
+        *const IVs[6],
+        *const ribbons[31];
 #pragma endregion
 
     // This is used to easily print out a Pokemon, when using a standard C++ terminal

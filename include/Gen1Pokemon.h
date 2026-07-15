@@ -38,7 +38,7 @@ protected:
         g1_statusCondition,
         g1_typeOne, g1_typeTwo,
         g1_catchRate,
-        *g1_types[2];
+        *const g1_types[2];
 
 #if ON_GBA
 #else

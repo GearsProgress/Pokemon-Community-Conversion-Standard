@@ -819,14 +819,14 @@ const DataVarInfo
     GBPokemon::ppUpNumMoveFour[2] = {{0x20, 2, 6}, {0x1A, 2, 6}},
     GBPokemon::ppNumTotalMoveFour[2] = {{0x20, 6, 0}, {0x1A, 6, 0}};
 
-const DataVarInfo *GBPokemon::moves[4] =
+const DataVarInfo *const GBPokemon::moves[4] =
     {
         GBPokemon::moveOne,
         GBPokemon::moveTwo,
         GBPokemon::moveThree,
         GBPokemon::moveFour,
 },
-                  *GBPokemon::statExps[5] =
+                  *const GBPokemon::statExps[5] =
                       {
                           GBPokemon::hpStatExp,
                           GBPokemon::atkStatExp,
@@ -834,7 +834,7 @@ const DataVarInfo *GBPokemon::moves[4] =
                           GBPokemon::speStatExp,
                           GBPokemon::spcStatExp,
 },
-                  *GBPokemon::DVs[5] =
+                  *const GBPokemon::DVs[5] =
                       {
                           GBPokemon::atkDV, // This is wrong, but it will never
                                             // be accessed anyway.
@@ -843,14 +843,14 @@ const DataVarInfo *GBPokemon::moves[4] =
                           GBPokemon::speDV,
                           GBPokemon::spcDV,
 },
-                  *GBPokemon::PPUpNums[4] =
+                  *const GBPokemon::PPUpNums[4] =
                       {
                           GBPokemon::ppUpNumMoveOne,
                           GBPokemon::ppUpNumMoveTwo,
                           GBPokemon::ppUpNumMoveThree,
                           GBPokemon::ppUpNumMoveFour,
 },
-                  *GBPokemon::PPUpTotals[4] = {
+                  *const GBPokemon::PPUpTotals[4] = {
                       GBPokemon::ppNumTotalMoveOne,
                       GBPokemon::ppNumTotalMoveTwo,
                       GBPokemon::ppNumTotalMoveThree,

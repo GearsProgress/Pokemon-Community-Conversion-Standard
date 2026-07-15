@@ -58,7 +58,7 @@ const DataVarInfo
     Gen1Pokemon::g1_catchRate = {0x07, 8, 0};
 
 const DataVarInfo
-    *Gen1Pokemon::g1_types[2] =
+    *const Gen1Pokemon::g1_types[2] =
         {
             &Gen1Pokemon::g1_typeOne,
             &Gen1Pokemon::g1_typeTwo,

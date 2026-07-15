@@ -29,11 +29,11 @@ protected:
 
     static const DataVarInfo
         // and the convenient arrays of some of the variable groups:
-        *moves[4],
-        *statExps[5],
-        *DVs[5],
-        *PPUpNums[4],
-        *PPUpTotals[4];
+        *const moves[4],
+        *const statExps[5],
+        *const DVs[5],
+        *const PPUpNums[4],
+        *const PPUpTotals[4];
 
 // This is used to easily print out a Pokemon, when using a standard C++ terminal
 #if ON_GBA
