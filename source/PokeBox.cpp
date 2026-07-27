@@ -67,6 +67,16 @@ bool PokeBox::removePokemon(int index)
     return false;
 }
 
+void PokeBox::reset()
+{
+    for (int i = 0; i < currIndex; i++)
+    {
+        delete boxStorage[i];
+        boxStorage[i] = nullptr;
+    }
+    currIndex = 0;
+}
+
 // This used to load our data in from an array
 void PokeBox::loadData(int generation, Language nLang, const byte nDataArray[])
 {

@@ -22,6 +22,7 @@ public:
     GBPokemon *getGBPokemon(int index);
     Gen3Pokemon *getGen3Pokemon(int index);
     bool removePokemon(int index);
+    void reset();
     void loadData(int generation, Language nLang, const byte nDataArray[]);
     void convertAll();
     int getNumInBox();
