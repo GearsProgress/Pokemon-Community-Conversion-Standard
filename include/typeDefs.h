@@ -666,6 +666,18 @@ enum Language
     KOREAN,
 };
 
+enum Version
+{
+    VERSION_UNKNOWN = 0,
+    RED,
+    GREEN,
+    BLUE,
+    YELLOW,
+    GOLD,
+    SILVER,
+    CRYSTAL,
+};
+
 enum RNGMethod
 {
     ABCD_U, // Normal method

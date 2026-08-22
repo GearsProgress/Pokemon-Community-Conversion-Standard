@@ -35,11 +35,13 @@ int main(int argc, char **argv)
     generate_gba_rom_value_tables("tools/table-generator/src/gba_rom_values/gba_rom_values_jpn.cpp", output_path, "gba_rom_values_jpn.bin", rom_data_values_jpn, rom_data_values_jpn_size);
     generate_gba_rom_value_tables("tools/table-generator/src/gba_rom_values/gba_rom_values_spa.cpp", output_path, "gba_rom_values_spa.bin", rom_data_values_spa, rom_data_values_spa_size);
 
+    generate_gb_rom_value_tables("tools/table-generator/src/gb_rom_values/gb_rom_values_jpn.cpp", output_path, "gb_rom_values_jpn.bin", gb_rom_values_jpn, gb_rom_values_jpn_size);
     generate_gb_rom_value_tables("tools/table-generator/src/gb_rom_values/gb_rom_values_eng.cpp", output_path, "gb_rom_values_eng.bin", gb_rom_values_eng, gb_rom_values_eng_size);
     generate_gb_rom_value_tables("tools/table-generator/src/gb_rom_values/gb_rom_values_fre.cpp", output_path, "gb_rom_values_fre.bin", gb_rom_values_fre, gb_rom_values_fre_size);
     generate_gb_rom_value_tables("tools/table-generator/src/gb_rom_values/gb_rom_values_ger.cpp", output_path, "gb_rom_values_ger.bin", gb_rom_values_ger, gb_rom_values_ger_size);
     generate_gb_rom_value_tables("tools/table-generator/src/gb_rom_values/gb_rom_values_ita.cpp", output_path, "gb_rom_values_ita.bin", gb_rom_values_ita, gb_rom_values_ita_size);
     generate_gb_rom_value_tables("tools/table-generator/src/gb_rom_values/gb_rom_values_spa.cpp", output_path, "gb_rom_values_spa.bin", gb_rom_values_spa, gb_rom_values_spa_size);
+    generate_gb_rom_value_tables("tools/table-generator/src/gb_rom_values/gb_rom_values_kor.cpp", output_path, "gb_rom_values_kor.bin", gb_rom_values_kor, gb_rom_values_kor_size);
 
     printf("]\nConvertion finished!\n\n");
     return 0;

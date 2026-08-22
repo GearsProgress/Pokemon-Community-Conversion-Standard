@@ -1,6 +1,9 @@
 #include "gb_rom_values/gb_rom_values.h"
 
 const struct GB_ROM gb_rom_values_spa[] = {
+    {
+    // SPA_GREEN
+    },
     {// SPA_RED
         .language = SPA_ID,
         .version = RED_ID,
@@ -30,6 +33,7 @@ const struct GB_ROM gb_rom_values_spa[] = {
         .garbageDataLocation = 0x00217F,
 
         .wRemoveMonFromBox = 0xCF9A,
+     .wCurrentBoxNum = 0xD5A5,
         .wBoxCount = 0xDA85,
         .wWhichPokemon = 0x00CF97,
         .wBoxDataStart = 0xDA85,
@@ -75,6 +79,7 @@ const struct GB_ROM gb_rom_values_spa[] = {
         .garbageDataLocation = 0x00217F,
 
         .wRemoveMonFromBox = 0xCF9A,
+     .wCurrentBoxNum = 0xD5A5,
         .wBoxCount = 0xDA85,
         .wWhichPokemon = 0x00CF97,
         .wBoxDataStart = 0xDA85,
@@ -122,6 +127,7 @@ const struct GB_ROM gb_rom_values_spa[] = {
         .garbageDataLocation = 0x0161,
 
         .wRemoveMonFromBox = 0xCF99,
+     .wCurrentBoxNum = 0xD5A4,
         .wBoxCount = 0xDA84,
         .wWhichPokemon = 0xCF96,
         .wBoxDataStart = 0xDA84,
@@ -169,11 +175,12 @@ const struct GB_ROM gb_rom_values_spa[] = {
         .garbageDataLocation = 0x0654,
 
         .wRemoveMonFromBox = 0x01D008,   // wPokemonWithdrawDepositParameter
+     .wCurrentBoxNum = 0x01D8BC,      // wCurBox
         .wBoxCount = 0x01AD6C,           // sBoxCount
         .wWhichPokemon = 0x01D005,       // wCurPartyMon
-        .wBoxDataStart = 0xAD6C,         // sBoxStart
-        .wBoxDataEnd = 0xB1BA,           // sBoxEnd
-        .wSerialEnemyDataBlock = 0xDD40, // wOTPartyData
+        .wBoxDataStart = 0x01AD6C,         // sBoxStart
+        .wBoxDataEnd = 0x01B1BA,           // sBoxEnd
+        .wSerialEnemyDataBlock = 0x01DD40, // wOTPartyData
         .wEnemyMonSpecies = 0x01D0EF,
 
         .wSerialEnemyMonsPatchList = 0xC5D0, // wOTPatchLists
@@ -217,11 +224,12 @@ const struct GB_ROM gb_rom_values_spa[] = {
         .garbageDataLocation = 0x0654,
 
         .wRemoveMonFromBox = 0x01D008,   // wPokemonWithdrawDepositParameter
+     .wCurrentBoxNum = 0x01D8BC,      // wCurBox
         .wBoxCount = 0x01AD6C,           // sBoxCount
         .wWhichPokemon = 0x01D005,       // wCurPartyMon
-        .wBoxDataStart = 0xAD6C,         // sBoxStart
-        .wBoxDataEnd = 0xB1BA,           // sBoxEnd
-        .wSerialEnemyDataBlock = 0xDD40, // wOTPartyData
+        .wBoxDataStart = 0x01AD6C,         // sBoxStart
+        .wBoxDataEnd = 0x01B1BA,           // sBoxEnd
+        .wSerialEnemyDataBlock = 0x01DD40, // wOTPartyData
         .wEnemyMonSpecies = 0x01D0EF,
 
         .wSerialEnemyMonsPatchList = 0xC5D0, // wOTPatchLists
@@ -266,11 +274,12 @@ const struct GB_ROM gb_rom_values_spa[] = {
         .garbageDataLocation = 0x0770,
 
         .wRemoveMonFromBox = 0x01D10B,   // wPokemonWithdrawDepositParameter
+     .wCurrentBoxNum = 0x01DB72,      // wCurBox
         .wBoxCount = 0x01AD10,           // sBoxCount
         .wWhichPokemon = 0x01D109,       // wCurPartyMon
         .wBoxDataStart = 0x01AD10,       // sBox
         .wBoxDataEnd = 0x01B15E,         // sBoxEnd
-        .wSerialEnemyDataBlock = 0xD26B, // wOTPartyData
+        .wSerialEnemyDataBlock = 0x01D26B, // wOTPartyData
         .wEnemyMonSpecies = 0x01D206,
 
         .wSerialEnemyMonsPatchList = 0xC6D0, // wOTPatchLists
