@@ -18,6 +18,9 @@
 #include "random.h"
 #endif
 
+#define POKEGB_STRING_TERMINATOR 0x50
+#define POKEGBA_STRING_TERMINATOR 0xFF
+
 // Avoid having to import math
 inline u32 sizeToMask(int len)
 {
