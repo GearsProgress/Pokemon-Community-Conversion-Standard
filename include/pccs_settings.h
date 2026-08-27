@@ -14,11 +14,12 @@
 
 #if ON_GBA
 #define USE_CPP_RAND false
+#define ACCESS_POKEDEX true
 #else
 #define USE_CPP_RAND true
+#define ACCESS_POKEDEX false
 #endif
 
-#define ACCESS_POKEDEX false
 
 #endif
 

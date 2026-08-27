@@ -1,6 +1,10 @@
 #include "GBPokemon.h"
 #include <cstring>
 
+#if ACCESS_POKEDEX
+#include "ptgb_save_data_manager.h"
+#endif
+
 // This constructor fills all our convenience arrays
 GBPokemon::GBPokemon()
 {
@@ -479,7 +483,6 @@ bool GBPokemon::convertSpeciesIndexNumber(Gen3Pokemon *newPkmn)
 bool GBPokemon::convertItem(Gen3Pokemon *newPkmn)
 {
 #if ACCESS_POKEDEX
-#include "save_data_manager.h"
     if (!is_caught(newPkmn->getSpeciesIndexNumber()))
     {
         newPkmn->setHeldItem(RARE_CANDY);
