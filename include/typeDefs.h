@@ -669,8 +669,8 @@ enum Language
 enum Version
 {
     VERSION_UNKNOWN = 0,
-    RED,
     GREEN,
+    RED,
     BLUE,
     YELLOW,
     GOLD,
