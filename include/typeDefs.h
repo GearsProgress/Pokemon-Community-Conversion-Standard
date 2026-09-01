@@ -656,7 +656,7 @@ enum Substructure
 
 enum Language
 {
-    LANGUAGE_UNKNOWN = 0,
+    LANGUAGE_UNKNOWN = -1,
     JAPANESE,
     ENGLISH,
     FRENCH,
@@ -668,7 +668,7 @@ enum Language
 
 enum Version
 {
-    VERSION_UNKNOWN = 0,
+    VERSION_UNKNOWN = -1,
     GREEN,
     RED,
     BLUE,
